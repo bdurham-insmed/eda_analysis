@@ -262,7 +262,7 @@ function App() {
     setError("");
     try {
       for (let i = 0; i < count; i++) {
-        await axios.post(`${INITIATOR_BASE}/start-pipeline`, {
+        await axios.post(`${INITIATOR_BASE}/jobs`, {
           workflow_id: selectedWorkflow.id,
           parameters: Object.fromEntries(
             Object.entries(formData).filter(([key]) => key !== "count"),

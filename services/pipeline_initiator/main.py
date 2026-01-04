@@ -26,8 +26,6 @@ class Steps(BaseModel):
     duration: int
     failure_prob: float
 
-
-
 # in-mem for valid workflows
 WORKFLOWS = {
     "rnaseq": {
@@ -116,8 +114,8 @@ def list_workflows():
          } for id_, details in WORKFLOWS.items()
     ]
 
-@app.post("/start-pipeline")
-def start_pipeline(request: PipelineRequest):
+@app.post("/jobs")
+def start_job(request: PipelineRequest):
     if request.workflow_id not in WORKFLOWS:
         raise HTTPException(status_code=400, detail="Invalid workflow_id provided.")
     workflow = WORKFLOWS[request.workflow_id]
