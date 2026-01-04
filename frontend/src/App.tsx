@@ -261,24 +261,14 @@ function App() {
     setLoading(true);
     setError("");
     try {
-        await Promise.all(
-      Array.from({ length: count }, () =>
-        axios.post(`${INITIATOR_BASE}/start-pipelines`, {
+      for (let i = 0; i < count; i++) {
+        await axios.post(`${INITIATOR_BASE}/start-pipeline`, {
           workflow_id: selectedWorkflow.id,
           parameters: Object.fromEntries(
             Object.entries(formData).filter(([key]) => key !== "count"),
           ),
-        }),
-      ),
-    );
-      // for (let i = 0; i < count; i++) {
-      //   await axios.post(`${INITIATOR_BASE}/start-pipeline`, {
-      //     workflow_id: selectedWorkflow.id,
-      //     parameters: Object.fromEntries(
-      //       Object.entries(formData).filter(([key]) => key !== "count"),
-      //     ),
-      //   });
-      // }
+        });
+      }
       const res = await axios.get<Pipeline[]>(`${API_BASE}/pipelines`);
       setPipelines(res.data);
       setSelectedWorkflow(null);
