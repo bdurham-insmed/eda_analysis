@@ -39,15 +39,15 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
     docker-compose up --build
     ```
 3. **Access the tools:**
-    - **UI**: Open your browser and navigate to `http://localhost:3000` to view the monitoring dashboard.
-    - **General API Server**: Access the API server at `http://localhost:8000/docs` for interactive API documentation.
-    - **Pipeline Initiator API**: Access the pipeline initiator at `http://localhost:8001/docs` for interactive API documentation.
+    - **UI**: Open your browser and navigate [here](http://localhost:3000) to view the monitoring dashboard.
+    - **General API Server**: Access the API server [here](http://localhost:8000/docs) for interactive API documentation.
+    - **Pipeline Initiator API**: Access the pipeline initiator [here](http://localhost:8001/docs) for interactive API documentation.
     - **Postgres DB**: Connect to the Postgres database at `localhost:5455` with username `postgres`, password `password`, and database name `postgres`.
-    - **Kafka UI**: Kafka UI is accessible at `http://localhost:8090`
+    - **Kafka UI**: Kafka UI is accessible [here](http://localhost:8090).
 
 4. **Run Pipelines**
 Using the UI, you can start pipelines that will generate events by selecting one of the available pipelines under the 'Start a New Pipeline' section.
-   1. Navigate to `http://localhost:3000`
+   1. Navigate [here](http://localhost:3000).
    2. Go to the 'Start a New Pipeline' section.
    3. Click on RNA-Seq Analysis or Variant Calling Pipeline button.
    4. Fill in required details in the form, fill in number of pipelines to run - mainly for showcasing event driven architecture with multiple pipelines.
