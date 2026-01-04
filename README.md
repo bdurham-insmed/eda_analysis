@@ -72,13 +72,12 @@ The topic will be partitioned to allow multiple consumers to read from it concur
 A maximum of 6 state_tracker instances can be run in parallel with the current topic partitioning - more can be run but will not improve performance. 
 To scale up the number of state_tracker instances, run:
 ```bash
-docker-compose up --scale state_tracker=<NUMBER_OF_INSTANCES>
+docker-compose up --scale state_tracker=6
 ```
 
 
 ## Future Improvements
-This is a simple demonstration of an event driven architecture, with only a single producer and consumer. 
-
+This is a simple demonstration of an event driven architecture, with only a single producer and consumer.
 Future improvements could include:
 * Integrate real pipeline workflows (e.g., directly in Nextflow via nf-kafka or via custom script generating events)
 * Add persistent data storage for pipeline results
