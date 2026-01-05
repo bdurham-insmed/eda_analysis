@@ -11,7 +11,7 @@ The Pipeline Initiator is a microservice responsible for starting new data proce
 
 ## Kafka Producer
 
-This service uses a **Kafka producer** to publish events to the `pipeline-events` topic. Each event describes the state of a pipeline (started, step started, step failed, completed, etc.). Downstream services (like state trackers, alerting, or retry handlers) consume these events to react to pipeline changes.
+This service uses a **Kafka producer** to publish events to the `pipeline-events` topic. Each event describes the state of a pipeline (started, step started, step failed, completed, etc.). Downstream services (i.e. state_tracker) will consume these events to react to pipeline changes.
 
 **Key Kafka Producer Concepts:**
 - **Producer**: Sends messages (events) to Kafka topics.
