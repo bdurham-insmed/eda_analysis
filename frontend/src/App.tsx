@@ -290,7 +290,14 @@ function App() {
         {wsConnected ? "Connected" : "Disconnected"}
       </div>
       <h1 className="dashboard-title">Pipeline Monitoring Dashboard</h1>
-        <WorkflowSelector workflows={workflows} loading={loading} error={error} setError={setError} setLoading={setLoading} setPipelines={setPipelines} />
+      <WorkflowSelector
+        workflows={workflows}
+        loading={loading}
+        error={error}
+        setError={setError}
+        setLoading={setLoading}
+        setPipelines={setPipelines}
+      />
       <section>
         <h3>Filter Pipelines</h3>
         <div className="pipeline-summary">
@@ -348,94 +355,94 @@ function App() {
           className="search-input"
           style={{ marginBottom: 12, width: 250 }}
         />
-        {filteredPipelines.length === 0 ? (
-          <p>No pipelines found for the selected filter or search.</p>
-        ) : (
-          <section>
-            <p>
-              The table below shows the latest pipelines. Click on "Details" to
-              view more information about each pipeline.
-            </p>
-            <table className="pipeline-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Status</th>
-                  <th>Duration</th>
-                  <th>Started</th>
-                  <th>Finished</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedPipelinesByStartTime.map((p) => (
-                  <tr key={p.id}>
-                    <td title={p.id}>{p.id.slice(0, 8)}...</td>
-                    <td>{p.name}</td>
-                    <td>
-                      <span
-                        className="status-badge"
-                        style={{ background: getStatusColor(p.status) }}
-                      >
-                        {p.status}
-                      </span>
-                    </td>
-                    <td className="duration-cell">{getElapsedTime(p)}</td>
-                    <td>
-                      {p.start_time
-                        ? new Date(p.start_time).toLocaleString()
-                        : "—"}
-                    </td>
-                    <td>
-                      {p.end_time ? new Date(p.end_time).toLocaleString() : "—"}
-                    </td>
-                    <td>
-                      <button
-                        onClick={() => fetchPipelineDetails(p.id)}
-                        className="details-btn"
-                      >
-                        Details
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="pagination">
-              <button
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="page-btn"
-              >
-                Prev
-              </button>
-              <span>
-                Page {currentPage} of{" "}
-                {Math.ceil(filteredPipelinesBySearch.length / pageSize)}
-              </span>
-              <button
-                onClick={() =>
-                  setCurrentPage((p) =>
-                    Math.min(
-                      Math.ceil(filteredPipelinesBySearch.length / pageSize),
-                      p + 1,
-                    ),
-                  )
-                }
-                disabled={
-                  currentPage ===
-                    Math.ceil(filteredPipelinesBySearch.length / pageSize) ||
-                  filteredPipelinesBySearch.length === 0
-                }
-                className="page-btn"
-              >
-                Next
-              </button>
-            </div>
-          </section>
-        )}
       </section>
+      {filteredPipelines.length === 0 ? (
+        <p>No pipelines found for the selected filter or search.</p>
+      ) : (
+        <section>
+          <p>
+            The table below shows the latest pipelines. Click on "Details" to
+            view more information about each pipeline.
+          </p>
+          <table className="pipeline-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Status</th>
+                <th>Duration</th>
+                <th>Started</th>
+                <th>Finished</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sortedPipelinesByStartTime.map((p) => (
+                <tr key={p.id}>
+                  <td title={p.id}>{p.id.slice(0, 8)}...</td>
+                  <td>{p.name}</td>
+                  <td>
+                    <span
+                      className="status-badge"
+                      style={{ background: getStatusColor(p.status) }}
+                    >
+                      {p.status}
+                    </span>
+                  </td>
+                  <td className="duration-cell">{getElapsedTime(p)}</td>
+                  <td>
+                    {p.start_time
+                      ? new Date(p.start_time).toLocaleString()
+                      : "—"}
+                  </td>
+                  <td>
+                    {p.end_time ? new Date(p.end_time).toLocaleString() : "—"}
+                  </td>
+                  <td>
+                    <button
+                      onClick={() => fetchPipelineDetails(p.id)}
+                      className="details-btn"
+                    >
+                      Details
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="pagination">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="page-btn"
+            >
+              Prev
+            </button>
+            <span>
+              Page {currentPage} of{" "}
+              {Math.ceil(filteredPipelinesBySearch.length / pageSize)}
+            </span>
+            <button
+              onClick={() =>
+                setCurrentPage((p) =>
+                  Math.min(
+                    Math.ceil(filteredPipelinesBySearch.length / pageSize),
+                    p + 1,
+                  ),
+                )
+              }
+              disabled={
+                currentPage ===
+                  Math.ceil(filteredPipelinesBySearch.length / pageSize) ||
+                filteredPipelinesBySearch.length === 0
+              }
+              className="page-btn"
+            >
+              Next
+            </button>
+          </div>
+        </section>
+      )}
       {selectedPipeline && (
         <div
           className="modal-overlay"

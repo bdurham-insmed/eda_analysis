@@ -1,7 +1,7 @@
-import type {Workflow, Pipeline} from "../types.ts";
-import {useRef, useState} from "react";
+import type { Workflow, Pipeline } from "../types.ts";
+import { useRef, useState } from "react";
 import axios from "axios";
-import {API_BASE, INITIATOR_BASE} from "../constants.ts";
+import { API_BASE, INITIATOR_BASE } from "../constants.ts";
 import "./WorkflowSelector.css";
 
 type Props = {
@@ -10,59 +10,68 @@ type Props = {
   error: string;
   setError: (msg: string) => void;
   setLoading: (loading: boolean) => void;
-  setPipelines: (pipelines: Pipeline[]) => void
+  setPipelines: (pipelines: Pipeline[]) => void;
 };
 
-export default function WorkflowSelector({ workflows, error, loading, setError, setLoading, setPipelines }: Props) {
-    const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
-    const [formData, setFormData] = useState<Record<string, string | number>>({});
-    const detailsRef = useRef<HTMLDetailsElement>(null);
+export default function WorkflowSelector({
+  workflows,
+  error,
+  loading,
+  setError,
+  setLoading,
+  setPipelines,
+}: Props) {
+  const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(
+    null,
+  );
+  const [formData, setFormData] = useState<Record<string, string | number>>({});
+  const detailsRef = useRef<HTMLDetailsElement>(null);
 
-    const handleParamChange = (name: string, value: unknown) => {
-        setFormData((prev) => ({ ...prev, [name]: value as string | number }));
-    };
+  const handleParamChange = (name: string, value: unknown) => {
+    setFormData((prev) => ({ ...prev, [name]: value as string | number }));
+  };
 
-    const handleWorkflowSelect = (workflow: Workflow) => {
-        setSelectedWorkflow(workflow);
-        setFormData({});
-        setError("");
-    };
+  const handleWorkflowSelect = (workflow: Workflow) => {
+    setSelectedWorkflow(workflow);
+    setFormData({});
+    setError("");
+  };
 
-    const startPipeline = async (count: number) => {
+  const startPipeline = async (count: number) => {
     if (!selectedWorkflow) return;
     setLoading(true);
     setError("");
     try {
-          for (let i = 0; i < count; i++) {
-            await axios.post(`${INITIATOR_BASE}/jobs`, {
-              workflow_id: selectedWorkflow.id,
-              parameters: Object.fromEntries(
-                Object.entries(formData).filter(([key]) => key !== "count"),
-              ),
-            });
-          }
-          const res = await axios.get<Pipeline[]>(`${API_BASE}/pipelines`);
-          setPipelines(res.data);
-          setSelectedWorkflow(null);
-          setFormData({});
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (err: any) {
-          setError(err.response?.data?.detail || "Failed to start pipeline");
-        } finally {
-          setLoading(false);
-          if (detailsRef.current) {
-              detailsRef.current.open = false;
-          }
-        }
-    };
+      for (let i = 0; i < count; i++) {
+        await axios.post(`${INITIATOR_BASE}/jobs`, {
+          workflow_id: selectedWorkflow.id,
+          parameters: Object.fromEntries(
+            Object.entries(formData).filter(([key]) => key !== "count"),
+          ),
+        });
+      }
+      const res = await axios.get<Pipeline[]>(`${API_BASE}/pipelines`);
+      setPipelines(res.data);
+      setSelectedWorkflow(null);
+      setFormData({});
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
+      setError(err.response?.data?.detail || "Failed to start pipeline");
+    } finally {
+      setLoading(false);
+      if (detailsRef.current) {
+        detailsRef.current.open = false;
+      }
+    }
+  };
 
-    return (
-        <details ref={detailsRef} open={true} className="workflow-selector">
-            <summary className="workflow-selector-summary">
-                <h2>Start a New Pipeline</h2>
-            </summary>
-        {!selectedWorkflow ? (
-          <section className="workflow-section">
+  return (
+    <details ref={detailsRef} open={true} className="workflow-selector">
+      <summary className="workflow-selector-summary">
+        <h2>Start a New Pipeline</h2>
+      </summary>
+      {!selectedWorkflow ? (
+        <section className="workflow-section">
           {workflows.length === 0 ? (
             <p>Loading workflows...</p>
           ) : (
@@ -200,6 +209,6 @@ export default function WorkflowSelector({ workflows, error, loading, setError, 
           </div>
         </section>
       )}
-        </details>
-    )
+    </details>
+  );
 }
