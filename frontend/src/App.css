@@ -76,7 +76,7 @@ body {
 .dashboard-title {
   font-size: 2.5rem;
   font-weight: 800;
-  margin-bottom: 2rem;
+  margin-bottom: 0.25rem;
   color: #1e293b;
   text-align: center;
   letter-spacing: 0.5px;
@@ -269,52 +269,35 @@ body {
   outline-offset: 2px;
 }
 
-.pipeline-summary {
-  display: flex;
-  gap: 1.2rem;
-  margin-bottom: 1.2rem;
+details {
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.5rem;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  margin-bottom: 1rem;
 }
 
-.pipeline-summary-card {
-  background: #f8f9fa;
-  border: 2px solid #d1d5db;
-  border-radius: 10px;
-  padding: 1.2rem 1.7rem;
-  transition:
-    box-shadow 0.2s,
-    border-color 0.2s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+details summary {
+  cursor: pointer;
+  outline: none;
+  padding: 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
   user-select: none;
 }
 
-.pipeline-summary-card.hover,
-.pipeline-summary-card:hover {
+details:not([open]) .hover,
+details:not([open]):hover {
   box-shadow: 0 6px 18px rgba(37, 99, 235, 0.1);
   border-color: var(--primary);
 }
 
-.pipeline-summary-card.selected {
-  border-color: var(--primary);
-  background: #e0e7ff;
+details[open] details summary {
+  color: #2563eb;
 }
 
-.pipeline-summary-card h3 {
-  margin: 0 0 0.3rem 0;
-  font-size: 1.1rem;
-  font-weight: 700;
-}
-
-.pipeline-summary-card small {
-  color: #64748b;
-}
-
-.search-input {
-  width: 250px;
-  padding: 0.55rem 0.8rem;
-  border: 1px solid var(--gray-border);
-  border-radius: 8px;
-  font-size: 1rem;
-  margin-bottom: 1.5rem;
-  transition: border var(--transition);
-  background: #fff;
+details h2 {
+  margin: 0;
+  display: inline;
 }

@@ -150,36 +150,3 @@
 .page-btn:hover:not(:disabled) {
   background: var(--primary-dark);
 }
-
-.workflow-selector {
-  border: 2px solid #d1d5db;
-  border-radius: 8px;
-  padding: 0.5rem;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  margin-bottom: 1rem;
-}
-
-.workflow-selector-summary {
-  cursor: pointer;
-  outline: none;
-  padding: 0.5rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  user-select: none;
-}
-
-.workflow-selector:not([open]) .hover,
-.workflow-selector:not([open]):hover {
-  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.1);
-  border-color: var(--primary);
-}
-
-.workflow-selector[open] .workflow-selector-summary {
-  color: #2563eb;
-}
-
-.workflow-selector h2 {
-  margin: 0;
-  display: inline;
-}

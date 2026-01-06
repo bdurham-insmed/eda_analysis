@@ -66,8 +66,8 @@ export default function WorkflowSelector({
   };
 
   return (
-    <details ref={detailsRef} open={true} className="workflow-selector">
-      <summary className="workflow-selector-summary">
+    <details ref={detailsRef} open={true}>
+      <summary>
         <h2>Start a New Pipeline</h2>
       </summary>
       {!selectedWorkflow ? (

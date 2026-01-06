@@ -3,6 +3,7 @@ import axios from "axios";
 import "./App.css";
 import WorkflowSelector from "./components/WorkflowSelector.tsx";
 import { API_BASE, INITIATOR_BASE, WS_URL } from "./constants.ts";
+import FilterPipelinesSection from "./components/FilterPipelinesSection.tsx";
 
 type Parameter = {
   name: string;
@@ -190,8 +191,6 @@ function App() {
     };
   }, [selectedPipeline]);
 
-  const allStatuses = ["RECENT", "RUNNING", "FAILED", "COMPLETED", "TOTAL"];
-
   const fetchPipelineDetails = async (id: string) => {
     try {
       const res = await axios.get<Pipeline>(`${API_BASE}/pipelines/${id}`);
@@ -288,8 +287,8 @@ function App() {
           className={`ws-dot ${wsConnected ? "connected" : "disconnected"}`}
         ></span>
         {wsConnected ? "Connected" : "Disconnected"}
+          <h1>Pipeline Monitoring Dashboard</h1>
       </div>
-      <h1 className="dashboard-title">Pipeline Monitoring Dashboard</h1>
       <WorkflowSelector
         workflows={workflows}
         loading={loading}
@@ -298,64 +297,13 @@ function App() {
         setLoading={setLoading}
         setPipelines={setPipelines}
       />
-      <section>
-        <h3>Filter Pipelines</h3>
-        <div className="pipeline-summary">
-          {allStatuses.map((status) => (
-            <div
-              className={`pipeline-summary-card${displayedStatus === status ? " selected" : ""}`}
-              key={status}
-              onClick={() => handleFilter(status)}
-              onMouseEnter={(e) => e.currentTarget.classList.add("hover")}
-              onMouseLeave={(e) => e.currentTarget.classList.remove("hover")}
-            >
-              <h3
-                style={{
-                  color: getStatusColor(status),
-                }}
-              >
-                {status}
-              </h3>
-              {status === "RECENT" ? (
-                <small>
-                  {" "}
-                  Pipelines started in the last 10 minutes:{" "}
-                  {
-                    pipelines.filter((p) => {
-                      const start = p.start_time
-                        ? new Date(p.start_time).getTime()
-                        : 0;
-                      return Date.now() - start <= 10 * 60 * 1000;
-                    }).length
-                  }{" "}
-                </small>
-              ) : (
-                <small>
-                  There are{" "}
-                  {status === "TOTAL"
-                    ? pipelines.length
-                    : pipelines.filter((p) => p.status === status).length}{" "}
-                  pipeline(s)
-                </small>
-              )}
-            </div>
-          ))}
-        </div>
-        {!wsConnected && (
-          <p className="warning-msg">
-            Warning: WebSocket disconnected. Real-time updates may not be
-            available.
-          </p>
-        )}
-        <input
-          type="text"
-          placeholder="Search by name or ID"
-          value={formData.search ?? ""}
-          onChange={(e) => handleParamChange("search", e.target.value)}
-          className="search-input"
-          style={{ marginBottom: 12, width: 250 }}
-        />
-      </section>
+      <FilterPipelinesSection
+        pipelines={pipelines}
+        formData={formData}
+        displayedStatus={displayedStatus}
+        handleParamChange={handleParamChange}
+        handleFilter={handleFilter}
+      />
       {filteredPipelines.length === 0 ? (
         <p>No pipelines found for the selected filter or search.</p>
       ) : (
