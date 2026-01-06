@@ -4,6 +4,7 @@ import "./App.css";
 import WorkflowSelector from "./components/WorkflowSelector.tsx";
 import { API_BASE, INITIATOR_BASE, WS_URL } from "./constants.ts";
 import FilterPipelinesSection from "./components/FilterPipelinesSection.tsx";
+import Header from "./components/Header.tsx";
 
 type Parameter = {
   name: string;
@@ -282,13 +283,7 @@ function App() {
 
   return (
     <div id="main-container">
-      <div className="ws-status">
-        <span
-          className={`ws-dot ${wsConnected ? "connected" : "disconnected"}`}
-        ></span>
-        {wsConnected ? "Connected" : "Disconnected"}
-          <h1>Pipeline Monitoring Dashboard</h1>
-      </div>
+      <Header wsConnected={wsConnected} />
       <WorkflowSelector
         workflows={workflows}
         loading={loading}
