@@ -58,8 +58,8 @@ export default function WorkflowSelector({ workflows, error, loading, setError, 
 
     return (
         <details ref={detailsRef} open={true} className="workflow-selector">
-            <summary>
-                <h2 style={{display: "inline"}}>Start a New Pipeline</h2>
+            <summary className="workflow-selector-summary">
+                <h2>Start a New Pipeline</h2>
             </summary>
         {!selectedWorkflow ? (
           <section className="workflow-section">

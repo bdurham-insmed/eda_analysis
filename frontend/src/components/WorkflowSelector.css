@@ -160,7 +160,7 @@
   margin-bottom: 2rem;
 }
 
-.workflow-selector summary {
+.workflow-selector-summary {
   cursor: pointer;
   outline: none;
   padding: 0.5rem 0;
@@ -169,10 +169,17 @@
   user-select: none;
 }
 
-.workflow-selector[open] summary {
+.workflow-selector:not([open])  .hover,
+.workflow-selector:not([open]):hover {
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.1);
+    border-color: var(--primary);
+}
+
+.workflow-selector[open] .workflow-selector-summary {
   color: #2563eb;
 }
 
 .workflow-selector h2 {
   margin: 0;
+    display: inline;
 }
