@@ -152,12 +152,12 @@
 }
 
 .workflow-selector {
-  border: 1px solid #d1d5db;
+  border: 2px solid #d1d5db;
   border-radius: 8px;
-  padding: 1.5rem;
+  padding: 0.5rem;
   background: #fff;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  margin-bottom: 2rem;
+  margin-bottom: 1rem;
 }
 
 .workflow-selector-summary {
