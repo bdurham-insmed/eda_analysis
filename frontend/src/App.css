@@ -265,7 +265,7 @@ details:not([open]):hover {
   border-color: var(--primary);
 }
 
-details[open] details summary {
+details[open] summary {
   color: #2563eb;
 }
 
