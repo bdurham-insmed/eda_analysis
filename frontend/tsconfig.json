@@ -4,5 +4,7 @@
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" }
   ],
-  "lib": ["es2017", "dom"]
+  "compilerOptions": {
+    "lib": ["es2017", "dom"]
+  }
 }
