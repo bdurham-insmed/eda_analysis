@@ -2,10 +2,10 @@
 This service consumes pipeline event messages from Apache Kafka and tracks the state of pipeline executions. It is designed for scalability and reliability in an event-driven architecture.
 
 ## Features
-Consumes events from Kafka topics
-Tracks and updates pipeline state
-Supports horizontal scaling via Kafka consumer groups
-Written in Python
+Consumes events from a Kafka topic
+* Tracks and updates pipeline state
+* Supports horizontal scaling via Kafka consumer groups
+* Written in Python
 
 ## Kafka Consumer Overview
 Kafka consumers read messages from Kafka topics. Key options and concepts:
