@@ -3,6 +3,7 @@ services:
     image: confluentinc/cp-kafka:7.7.1
     ports:
       - "9092:9092"
+      - "9997:9997"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: 'broker, controller'
@@ -17,6 +18,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       CLUSTER_ID: 'kafka-cluster-1'
+      KAFKA_JMX_PORT: 9997
     healthcheck:
         test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
         interval: 10s
@@ -48,6 +50,8 @@ services:
       DYNAMIC_CONFIG_ENABLED: "true"
       KAFKA_CLUSTERS_0_NAME: "pipeline-service-eda-demo"
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_METRICS_TYPE: JMX
+      KAFKA_CLUSTERS_0_METRICS_PORT: 9997
 
 
   db:
