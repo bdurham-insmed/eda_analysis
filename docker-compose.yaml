@@ -6,31 +6,37 @@ services:
       - "9997:9997"
     environment:
       KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: 'broker, controller'
-      KAFKA_CONTROLLER_QUORUM_VOTERS: '1@kafka:9093'
-      KAFKA_LISTENERS: 'PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093'
+      KAFKA_PROCESS_ROLES: "broker, controller"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093"
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: 'CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT'
-      KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
-      KAFKA_INTER_BROKER_LISTENER_NAME: 'PLAINTEXT'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      CLUSTER_ID: 'kafka-cluster-1'
+      CLUSTER_ID: "kafka-cluster-1"
       KAFKA_JMX_PORT: 9997
     healthcheck:
-        test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
-        interval: 10s
-        timeout: 5s
-        retries: 5
+      test:
+        [
+          "CMD",
+          "kafka-broker-api-versions",
+          "--bootstrap-server",
+          "localhost:9092",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   kafka-init:
     image: confluentinc/cp-kafka:7.7.1
     depends_on:
       kafka:
         condition: service_healthy
-    entrypoint: [ "/bin/sh", "-c" ]
+    entrypoint: ["/bin/sh", "-c"]
     command:
       - |
         kafka-topics --create --if-not-exists \
@@ -42,7 +48,7 @@ services:
   kafbat-ui:
     image: ghcr.io/kafbat/kafka-ui:latest
     ports:
-        - "8090:8080"
+      - "8090:8080"
     depends_on:
       kafka:
         condition: service_healthy
@@ -52,7 +58,6 @@ services:
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
       KAFKA_CLUSTERS_0_METRICS_TYPE: JMX
       KAFKA_CLUSTERS_0_METRICS_PORT: 9997
-
 
   db:
     image: postgres:17
@@ -65,10 +70,10 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./db_init/init.sql:/docker-entrypoint-initdb.d/init_db.sql
     healthcheck:
-        test: ["CMD-SHELL", "pg_isready -U postgres"]
-        interval: 10s
-        timeout: 5s
-        retries: 5
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   api:
     build:
@@ -84,7 +89,6 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:password@db/postgres
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
-
 
   state_tracker:
     build:
@@ -104,6 +108,14 @@ services:
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - API_BROADCAST_URL=http://api:8000/internal/broadcast
 
+  metric_collector:
+    build:
+      context: .
+      dockerfile: services/metric_collector/Dockerfile
+    depends_on:
+      kafka:
+        condition: service_healthy
+
   initiator:
     build:
       context: .
@@ -112,16 +124,16 @@ services:
     ports:
       - "8001:8001"
     depends_on:
-        kafka:
-            condition: service_healthy
+      kafka:
+        condition: service_healthy
 
   frontend:
     build: ./frontend
     container_name: frontend
     ports:
-        - "3000:80"
+      - "3000:80"
     depends_on:
       - api
 
 volumes:
-    postgres_data:
+  postgres_data:

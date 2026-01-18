@@ -8,10 +8,12 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
 - Python-based services for event production and consumption
 - Scalable architecture using Docker Compose
 - Example of state tracking and event processing
+- Real-time pipeline state updates via WebSocket
 
 ## Tech Stack
 
 - Python 3.12+
+- Golang 1.24.5
 - Apache Kafka (using `confluent-kafka` Python library)
 - React + Vite (TypeScript) for frontend dashboard
 - FastAPI for backend services
@@ -19,13 +21,22 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
 - Postgres
 
 ## Project Structure
-- [db_init/](db_init) - Database initialization scripts
-- [frontend/](frontend) - React + TypeScript + Vite frontend for monitoring dashboards
-- [services/](services) - Contains all backend microservices
-  - [api_server/](services/api_server) - FastAPI service exposing REST endpoints for monitoring, uses WebSocket for real-time updates
-  - [pipeline_initiator/](services/pipeline_initiator) - FastAPI service to initiate starting pipelines
-  - [state_tracker/](services/state_tracker) - Consumes events and manage pipeline states (updates DB)
-- [docker-compose.yml](docker-compose.yaml) - Orchestrates services and Kafka broker
+- [db_init/](db_init) 
+  - Database initialisation scripts
+- [frontend/](frontend) 
+  - React + TypeScript + Vite frontend for a pipeline monitoring dashboard
+- [services/](services) 
+  - Contains all backend microservices
+    - [api_server/](services/api_server)
+      - FastAPI service exposing REST endpoints for monitoring, uses WebSocket for real-time updates
+    - [pipeline_initiator/](services/pipeline_initiator)
+      - FastAPI service to initiate starting pipelines
+    - [state_tracker/](services/state_tracker)
+      - Consumes events and manage pipeline states (updates DB)
+    - [metric_collector](services/metric_collector)
+      - Go service to print pipeline events to stdout (demonstration of multi-language consumers in a single space; may actually do metric collection in future if I have time...)
+- [docker-compose.yml](docker-compose.yaml)
+  - Orchestrates services and Kafka broker
 
 
 ## Running the Project locally
@@ -54,13 +65,22 @@ Using the UI, you can start pipelines that will generate events by selecting one
    5. Click 'Start Pipeline' to initiate the pipeline(s).
 
 5. **Monitor Events:**
+The frontend dashboard updates pipeline states and events in near real-time using WebSocket integration.
    The API server will expose endpoints to monitor pipeline states and events in real-time.
    The dashboard will update as events are processed. To visualise the events in Kafka UI, navigate to the 'Topics' section and select the `pipeline_events` topic.
 6. **Shut down services and clear storage:**
    ```bash
    docker-compose down -v
    ```
-   
+
+## WebSocket Integration
+
+The API server receives real-time pipeline state and event updates from the `state_tracker` service, which pushes updates to a dedicated API endpoint. The API server then broadcasts these updates to all connected frontend clients via WebSocket, enabling instant feedback and live monitoring of pipeline progress.
+
+- The frontend establishes a WebSocket connection to the API server.
+- As the `state_tracker` processes events, it sends state changes to the API server, which relays them to all connected clients.
+- This ensures the dashboard reflects the latest pipeline activity in near real-time.
+
 ## Scaling
 Multiple state_tracker instances can be run in parallel, currently it's set as 3 in the `docker-compose.yml` file. 
 
