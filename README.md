@@ -67,7 +67,7 @@ Using the UI, you can start pipelines that will generate events by selecting one
 5. **Monitor Events:**
 The frontend dashboard updates pipeline states and events in near real-time using WebSocket integration.
    The API server will expose endpoints to monitor pipeline states and events in real-time.
-   The dashboard will update as events are processed. To visualise the events in Kafka UI, navigate to the 'Topics' section and select the `pipeline_events` topic.
+   The dashboard will update as events are processed. To visualise the events in Kafka UI, navigate to the 'Topics' section and select the `pipeline-events` topic.
 6. **Shut down services and clear storage:**
    ```bash
    docker-compose down -v
