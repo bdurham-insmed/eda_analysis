@@ -93,16 +93,16 @@ class PipelineSimulator:
 
     def simulate(self):
         self.status = "RUNNING"
-        self.produce_event(event_type="STARTED", status=self.status, steps=str(self.steps))
+        self.produce_event(event_type="STARTED", status=self.status, steps=str([step.model_dump() for step in self.steps]))
         for step in self.steps:
-            self.produce_event(event_type="STEP_STARTED", step_name=step["name"], status=self.status)
+            self.produce_event(event_type="STEP_STARTED", step_name=step.name, status=self.status)
             time.sleep(step.duration)
             if random.random() < step.failure_prob:
                 self.status = "FAILED"
                 self.produce_event(event_type="STEP_FAILED", step_name=step.name, status=self.status, error=f"Step {step.name} failed due to error.")
                 self.produce_event(event_type="FAILED", status=self.status, error=f"Pipeline {self.pipeline_id} failed at step {step.name}.")
                 return
-            self.produce_event(event_type="STEP_COMPLETED", step_name=step["name"], status="COMPLETED")
+            self.produce_event(event_type="STEP_COMPLETED", step_name=step.name, status="COMPLETED")
 
         self.status = "COMPLETED"
         self.produce_event(event_type=self.status, status=self.status)

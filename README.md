@@ -95,17 +95,3 @@ To scale up the number of state_tracker instances, run:
 docker-compose up --scale state_tracker=6
 ```
 
-
-## Future Improvements
-This is a simple demonstration of an event driven architecture, with only a single producer and consumer.
-Future improvements could include:
-* Integrate real pipeline workflows (e.g., directly in Nextflow via nf-kafka or via custom script generating events)
-* Implement additional consumers:
-  * Analytics Service for pipeline performance metrics
-  * Alerting Service for failure notifications
-  * Reporting Service for generating pipeline reports
-  * Retry Service for handling failed pipelines automatically instead of manual restarts
-* Add persistent data storage for pipeline results
-* Archive old events and pipeline states 
-* Allow retries for failed pipeline / pipeline steps
-* Implement notification service for pipeline status updates
