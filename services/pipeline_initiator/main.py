@@ -8,7 +8,7 @@ import time
 import random
 from threading import Thread
 import os
-from dotenv import load_dotenv
+from dotenv.main import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 
 load_dotenv()
@@ -21,13 +21,13 @@ class PipelineRequest(BaseModel):
     workflow_id: str
     parameters: dict = {}
 
-class Steps(BaseModel):
+class Step(BaseModel):
     name: str
     duration: int
     failure_prob: float
 
 # in-mem for valid workflows
-WORKFLOWS = {
+WORKFLOWS: dict[str, dict[str, str | list[dict[str, str | list[str]]]]] = {
     "rnaseq": {
         "name": "RNA-Seq Analysis",
         "description": "Pipeline for RNA-Seq data processing and analysis.",
@@ -57,20 +57,20 @@ app.add_middleware(
 )
 
 class PipelineSimulator:
-    def __init__(self, pipeline_id: str, name: str, kafka_producer: Producer, steps: list[Steps] = None):
+    def __init__(self, pipeline_id: str, name: str, kafka_producer: Producer, steps: list[Step] | None = None):
         self.pipeline_id = pipeline_id
         self.name = name
         self.steps = steps if steps else [
-            {"name": "data_ingestion", "duration": random.randint(2, 5), "failure_prob": 0.05},
-            {"name": "data_processing", "duration": random.randint(3, 7), "failure_prob": 0.03},
-            {"name": "model_training", "duration": random.randint(5, 10), "failure_prob": 0.02},
-            {"name": "evaluation", "duration": random.randint(2, 4), "failure_prob": 0.04},
-            {"name": "report", "duration": random.randint(1, 3), "failure_prob": 0.001}
+            Step(name="data_ingestion", duration=random.randint(2, 5), failure_prob=0.05),
+            Step(name="data_processing", duration=random.randint(3, 7), failure_prob=0.03),
+            Step(name="model_training", duration=random.randint(5, 10), failure_prob=0.02),
+            Step(name="evaluation", duration=random.randint(2, 4), failure_prob=0.04),
+            Step(name="report", duration=random.randint(1, 3), failure_prob=0.001)
         ]
         self.kafka_producer = kafka_producer
         self.status = "PENDING"
 
-    def produce_event(self, event_type: str, step_name: str = None, status: str = None, error: str = None, steps: str = None):
+    def produce_event(self, event_type: str, step_name: str | None = None, status: str | None = None, error: str | None = None, steps: str | None = None):
         event = {
             "pipeline_id": self.pipeline_id,
             "name": self.name,
@@ -96,11 +96,11 @@ class PipelineSimulator:
         self.produce_event(event_type="STARTED", status=self.status, steps=str(self.steps))
         for step in self.steps:
             self.produce_event(event_type="STEP_STARTED", step_name=step["name"], status=self.status)
-            time.sleep(step["duration"])
-            if random.random() < step["failure_prob"]:
+            time.sleep(step.duration)
+            if random.random() < step.failure_prob:
                 self.status = "FAILED"
-                self.produce_event(event_type="STEP_FAILED", step_name=step["name"], status=self.status, error=f"Step {step['name']} failed due to error.")
-                self.produce_event(event_type="FAILED", status=self.status, error=f"Pipeline {self.pipeline_id} failed at step {step['name']}.")
+                self.produce_event(event_type="STEP_FAILED", step_name=step.name, status=self.status, error=f"Step {step.name} failed due to error.")
+                self.produce_event(event_type="FAILED", status=self.status, error=f"Pipeline {self.pipeline_id} failed at step {step.name}.")
                 return
             self.produce_event(event_type="STEP_COMPLETED", step_name=step["name"], status="COMPLETED")
 
@@ -119,7 +119,7 @@ def start_job(request: PipelineRequest):
     if request.workflow_id not in WORKFLOWS:
         raise HTTPException(status_code=400, detail="Invalid workflow_id provided.")
     workflow = WORKFLOWS[request.workflow_id]
-    allowed_params = {param["name"] for param in workflow["parameters"]}
+    allowed_params = {param["name"] for param in workflow["parameters"] if isinstance(param, dict)}
     unknown_params = set(request.parameters.keys()) - allowed_params
 
     if unknown_params:
@@ -128,7 +128,7 @@ def start_job(request: PipelineRequest):
     pipeline_id = str(uuid4())
     params = request.parameters
     if params.get("simulate", True):
-        simulator = PipelineSimulator(pipeline_id, workflow["name"], kafka_producer)
+        simulator = PipelineSimulator(pipeline_id, str(workflow["name"]), kafka_producer)
         thread = Thread(target=simulator.simulate)
         thread.start()
     else:

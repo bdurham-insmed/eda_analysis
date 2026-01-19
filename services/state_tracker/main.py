@@ -23,7 +23,7 @@ kafka_consumer = Consumer({
 
 kafka_consumer.subscribe(topics=['pipeline-events'])
 
-async def send_broadcast(pipeline_id: str, name: str, status: str, event_type: str, step_name: str = None):
+async def send_broadcast(pipeline_id: str, name: str, status: str, event_type: str, step_name: str | None = None):
     payload = {
         "pipeline_id": pipeline_id,
         "name": name,

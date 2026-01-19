@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import create_engine, text
 from pydantic import BaseModel
 import os
-from dotenv import load_dotenv
+from dotenv.main import load_dotenv
 
 load_dotenv()
 
