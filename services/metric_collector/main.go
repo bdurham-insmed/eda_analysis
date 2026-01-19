@@ -24,18 +24,25 @@ func main() {
 		os.Exit(1)
 	}
 
-	defer func() {
-		const maxRetries = 5
-		for i := range maxRetries {
-			if err := r.Close(); err != nil {
-				log.Printf("failed to close reader (attempt %d/%d): %v", i+1, maxRetries, err)
-				time.Sleep(500 * time.Millisecond)
-				continue
-			}
-			return
-		}
-		log.Fatalf("failed to close reader after %d attempts", maxRetries)
-	}()
+    defer func() {
+        if r == nil {
+            log.Println("Kafka consumer is nil, nothing to close")
+            return
+        }
+        const maxRetries = 5
+        var lastErr error
+        for i := 0; i < maxRetries; i++ {
+            if err := r.Close(); err != nil {
+                lastErr = err
+                log.Printf("failed to close consumer (attempt %d/%d): %v", i+1, maxRetries, err)
+                time.Sleep(time.Duration(1<<i) * 100 * time.Millisecond) // exponential backoff
+                continue
+            }
+            log.Println("Kafka consumer closed successfully")
+            return
+        }
+        log.Fatalf("failed to close consumer after %d attempts, last error: %v", maxRetries, lastErr)
+    }()
 
 	err = r.SubscribeTopics([]string{topic}, nil)
 	if err != nil {
