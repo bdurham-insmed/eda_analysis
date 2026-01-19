@@ -1,6 +1,6 @@
-# Pipeline Monitoring - An Event Driven Architecture Introduction
+# Pipeline Monitoring
 
-This repository demonstrates an Event Driven Architecture (EDA) using Apache Kafka and Python. It showcases how to monitor and scale pipeline processing using events.
+This repository demonstrates an Event Driven Architecture (EDA) using Apache Kafka, Python and Go. It showcases how to monitor and scale pipeline processing using events.
 
 ## Features
 
@@ -14,9 +14,9 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
 
 - Python 3.12+
 - Golang 1.24.5
-- Apache Kafka (using `confluent-kafka` Python library)
-- React + Vite (TypeScript) for frontend dashboard
-- FastAPI for backend services
+- Apache Kafka
+- React + Vite (TypeScript)
+- FastAPI
 - Docker & Docker Compose 
 - Postgres
 
