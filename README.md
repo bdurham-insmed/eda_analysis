@@ -16,30 +16,30 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
 - Golang 1.24.5
 - Apache Kafka
 - React + Vite (TypeScript)
-- FastAPI
-- Docker & Docker Compose 
+- Docker & Docker Compose
 - Postgres
 
 ## Project Structure
-- [db_init/](db_init) 
+
+- [db_init/](db_init)
   - Database initialisation scripts
-- [frontend/](frontend) 
+- [frontend/](frontend)
   - React + TypeScript + Vite frontend for a pipeline monitoring dashboard
-- [services/](services) 
+- [services/](services)
   - Contains all backend microservices
     - [api_server/](services/api_server)
       - FastAPI service exposing REST endpoints for monitoring, uses WebSocket for real-time updates
     - [pipeline_initiator/](services/pipeline_initiator)
       - FastAPI service to initiate starting pipelines
     - [state_tracker/](services/state_tracker)
-      - Consumes events and manage pipeline states (updates DB)
+      - Consumes events and manages pipeline states (updates DB)
     - [metric_collector](services/metric_collector)
       - Go service to print pipeline events to stdout (demonstration of multi-language consumers in a single space; may actually do metric collection in future if I have time...)
 - [docker-compose.yml](docker-compose.yaml)
   - Orchestrates services and Kafka broker
 
-
 ## Running the Project locally
+
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/bdurham-insmed/eda_analysis.git
@@ -48,16 +48,16 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
 2. **Start services using Docker Compose:**
    ```bash
     docker-compose up --build
-    ```
+   ```
 3. **Access the tools:**
-    - **UI**: Open your browser and navigate [here](http://localhost:3000) to view the monitoring dashboard.
-    - **General API Server**: Access the API server [here](http://localhost:8000/docs) for interactive API documentation.
-    - **Pipeline Initiator API**: Access the pipeline initiator [here](http://localhost:8001/docs) for interactive API documentation.
-    - **Postgres DB**: Connect to the Postgres database at `localhost:5455` with username `postgres`, password `password`, and database name `postgres`.
-    - **Kafka UI**: Kafka UI is accessible [here](http://localhost:8090).
+   - **UI**: Open your browser and navigate [here](http://localhost:3000) to view the monitoring dashboard.
+   - **General API Server**: Access the API server [here](http://localhost:8000/docs) for interactive API documentation.
+   - **Pipeline Initiator API**: Access the pipeline initiator [here](http://localhost:8001/docs) for interactive API documentation.
+   - **Postgres DB**: Connect to the Postgres database at `localhost:5455` with username `postgres`, password `password`, and database name `postgres`.
+   - **Kafka UI**: Kafka UI is accessible [here](http://localhost:8090).
 
 4. **Run Pipelines**
-Using the UI, you can start pipelines that will generate events by selecting one of the available pipelines under the 'Start a New Pipeline' section.
+   Using the UI, you can start pipelines that will generate events by selecting one of the available pipelines under the 'Start a New Pipeline' section.
    1. Navigate [here](http://localhost:3000).
    2. Go to the 'Start a New Pipeline' section.
    3. Click on RNA-Seq Analysis or Variant Calling Pipeline button.
@@ -65,7 +65,7 @@ Using the UI, you can start pipelines that will generate events by selecting one
    5. Click 'Start Pipeline' to initiate the pipeline(s).
 
 5. **Monitor Events:**
-The frontend dashboard updates pipeline states and events in near real-time using WebSocket integration.
+   The frontend dashboard updates pipeline states and events in near real-time using WebSocket integration.
    The API server will expose endpoints to monitor pipeline states and events in real-time.
    The dashboard will update as events are processed. To visualise the events in Kafka UI, navigate to the 'Topics' section and select the `pipeline-events` topic.
 6. **Shut down services and clear storage:**
@@ -82,16 +82,17 @@ The API server receives real-time pipeline state and event updates from the `sta
 - This ensures the dashboard reflects the latest pipeline activity in near real-time.
 
 ## Scaling
-Multiple state_tracker instances can be run in parallel, currently it's set as 3 in the `docker-compose.yml` file. 
 
-Kafka's consumer group mechanism ensures events are distributed and processed efficiently, 
+Multiple state_tracker instances can be run in parallel, currently it's set as 3 in the `docker-compose.yml` file.
+
+Kafka's consumer group mechanism ensures events are distributed and processed efficiently,
 improving fault tolerance and scalability.
 
 The topic will be partitioned to allow multiple consumers to read from it concurrently, this is found in the `docker-compose.yml` file under the kafka-init section.
 
-A maximum of 6 state_tracker instances can be run in parallel with the current topic partitioning - more can be run but will not improve performance. 
+A maximum of 6 state_tracker instances can be run in parallel with the current topic partitioning - more can be run but will not improve performance.
 To scale up the number of state_tracker instances, run:
+
 ```bash
 docker-compose up --scale state_tracker=6
 ```
-

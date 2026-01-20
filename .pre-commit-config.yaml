@@ -1,0 +1,28 @@
+repos:
+  -   repo: https://github.com/astral-sh/ruff-pre-commit
+      rev: v0.14.13
+      hooks:
+      -   id: ruff-check
+          args: [ --fix ]
+      -   id: ruff-format
+
+  - repo: https://github.com/jsh9/pydoclint
+    rev: 0.8.3
+    hooks:
+      - id: pydoclint
+        args: [ --quiet, --exclude='\.git|\.tox|tests/data']
+
+  -   repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v6.0.0
+      hooks:
+      -   id: check-json
+      -   id: check-toml
+      -   id: check-added-large-files
+      -   id: check-yaml
+      -   id: debug-statements
+      -   id: end-of-file-fixer
+
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.1
+    hooks:
+      - id: go-fmt

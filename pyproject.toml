@@ -12,5 +12,31 @@ members = [
 [tool.uv]
 dev-dependencies = [
     "pytest>=8.0.0",
-    "httpx>=0.27.0"
+    "httpx>=0.27.0",
+    "pre-commit>=4.5.1",
 ]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+show-fixes = true
+lint.select = [
+    "E4", "E7", "E9", "F",  # ruff defaults: pyflake and pycodestyle errors
+    "W", # pycodestyle warnings
+    "I",  # isort
+    "COM",  # pyflakes trailing comma
+    "UP",  # pyupgrade
+    "D10",  # docstring presence
+    "D419",  # empty docstring
+    "T100",  # debugger used
+]
+lint.ignore = [
+    "COM812",  # trailing comma
+    "D100",  # missing docstring in public module
+    "D105",  # missing docstring in magic method
+    "D106",  # missing docstring in public nested class
+    "D107",  # missing docstring in __init__ method
+]
+
+[tool.ruff.lint.isort]
+force-single-line = true

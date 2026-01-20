@@ -22,6 +22,7 @@ This service provides a REST API for querying pipeline states and uses WebSocket
 - Optional database connection for persistent state
 
 ## Running the API Server Service
-This service is intended to be run as part of a Docker Compose setup. 
+
+This service is intended to be run as part of a Docker Compose setup.
 Please refer to the main project README for instructions on setting up and running the entire system.
 Ensure you have Docker and Docker Compose installed.

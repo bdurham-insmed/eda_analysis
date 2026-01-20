@@ -16,12 +16,30 @@ venv/
 *.env
 *.venv
 
+# Go
+bin/
+*.exe
+*.test
+*.out
+
+# Go modules
+go.sum
+
+# Rust
+/target/
+**/target/
+services/**/target/
+*.rs.bk
+**/*.rs.bk
+Cargo.lock
+
 # macOS
 .DS_Store
 
 # IDEs
 .idea/
 .vscode/
+.zed/
 
 # Logs
 *.log
