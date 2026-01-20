@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import axios from "axios";
 import "./App.css";
 import WorkflowSelector from "./components/WorkflowSelector.tsx";
@@ -47,11 +47,70 @@ type WebSocketUpdate = {
   timestamp: number;
 };
 
+const getStatusColor = (status: string): string => {
+  switch (status) {
+    case "RECENT":
+      return "#17a2b8";
+    case "COMPLETED":
+      return "#28a745";
+    case "FAILED":
+      return "#dc3545";
+    case "RUNNING":
+      return "#ffc107";
+    default:
+      return "#6c757d";
+  }
+};
+
+const getElapsedTime = (pipeline: Pipeline): string => {
+  if (!pipeline.start_time) return "—";
+  const start = new Date(pipeline.start_time).getTime();
+  const end = pipeline.end_time
+    ? new Date(pipeline.end_time).getTime()
+    : Date.now();
+  const seconds = Math.floor((end - start) / 1000);
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+};
+
+const filterPipelines = (
+  pipelines: Pipeline[],
+  displayedStatus: string,
+  search: string | number | undefined,
+): Pipeline[] => {
+  let filtered = pipelines;
+  if (displayedStatus === "RECENT") {
+    filtered = filtered.filter((p) => {
+      const start = p.start_time ? new Date(p.start_time).getTime() : 0;
+      return Date.now() - start <= 10 * 60 * 1000;
+    });
+  } else if (displayedStatus !== "TOTAL") {
+    filtered = filtered.filter((p) => p.status === displayedStatus);
+  }
+  if (search) {
+    const lowerSearch = (search as string).toLowerCase();
+    filtered = filtered.filter(
+      (p) =>
+        p.name.toLowerCase().includes(lowerSearch) ||
+        p.id.toLowerCase().includes(lowerSearch),
+    );
+  }
+  return filtered;
+};
+
+const sortPipelines = (pipelines: Pipeline[]): Pipeline[] =>
+  [...pipelines].sort((a, b) => {
+    const aTime = a.start_time ? new Date(a.start_time).getTime() : 0;
+    const bTime = b.start_time ? new Date(b.start_time).getTime() : 0;
+    return bTime - aTime;
+  });
+
 function App() {
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
-  const [filteredPipelines, setFilteredPipelines] = useState<Pipeline[]>([]);
   const [displayedStatus, setDisplayedStatus] = useState<string>("TOTAL");
-
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [selectedPipeline, setSelectedPipeline] = useState<Pipeline | null>(
     null,
@@ -61,36 +120,31 @@ function App() {
   const [error, setError] = useState("");
   const [wsConnected, setWsConnected] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const selectedPipelineRef = useRef<Pipeline>(selectedPipeline);
   const pageSize: number = 25;
 
   useEffect(() => {
-    let filtered: Pipeline[];
-    if (displayedStatus === "TOTAL") {
-      filtered = pipelines;
-    } else if (displayedStatus === "RECENT") {
-      filtered = pipelines.filter((p) => {
-        const start = p.start_time ? new Date(p.start_time).getTime() : 0;
-        return Date.now() - start <= 10 * 60 * 1000;
-      });
-    } else {
-      filtered = pipelines.filter((p) => p.status === displayedStatus);
-    }
-    setFilteredPipelines(filtered);
-  }, [pipelines, displayedStatus]);
+    const fetchInitialData = async () => {
+      try {
+        const [pipelinesRes, workflowsRes] = await Promise.all([
+          axios.get<Pipeline[]>(`${API_BASE}/pipelines`),
+          axios.get<Workflow[]>(`${INITIATOR_BASE}/workflows`),
+        ]);
+        setPipelines(pipelinesRes.data);
+        setWorkflows(workflowsRes.data);
+      } catch {
+        setError("Failed to connect to backend");
+      }
+    };
+    fetchInitialData();
+  }, []);
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [displayedStatus, formData.search]);
 
-  const getElapsedTime = (pipeline: Pipeline): string => {
-    if (!pipeline.start_time) return "—";
-    const start = new Date(pipeline.start_time).getTime();
-    const end = pipeline.end_time
-      ? new Date(pipeline.end_time).getTime()
-      : Date.now();
-    const seconds = Math.floor((end - start) / 1000);
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    const pad = (n: number) => n.toString().padStart(2, "0");
-    return `${pad(h)}:${pad(m)}:${pad(s)}`;
-  };
+  useEffect(() => {
+    selectedPipelineRef.current = selectedPipeline;
+  }, [selectedPipeline]);
 
   useEffect(() => {
     let socket: WebSocket | null = null;
@@ -143,7 +197,7 @@ function App() {
               : p,
           );
         });
-        if (selectedPipeline?.id === update.pipeline_id) {
+        if (selectedPipelineRef.current?.id === update.pipeline_id) {
           fetchPipelineDetails(update.pipeline_id)
             .then()
             .catch((err) => console.error(err));
@@ -161,36 +215,13 @@ function App() {
         }, delay);
       };
     };
-    const fetchInitialData = async () => {
-      try {
-        const [pipelinesRes, workflowsRes] = await Promise.all([
-          axios.get<Pipeline[]>(`${API_BASE}/pipelines`),
-          axios.get<Workflow[]>(`${INITIATOR_BASE}/workflows`),
-        ]);
-        setPipelines(pipelinesRes.data);
-        setFilteredPipelines(pipelinesRes.data);
-        setWorkflows(workflowsRes.data);
-      } catch (err) {
-        console.error("Failed to load initial data", err);
-        setError("Failed to connect to backend");
-      }
-    };
 
-    fetchInitialData()
-      .then()
-      .catch((err) => console.error(err));
     connectWebSocket();
     return () => {
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
-      if (socket) {
-        socket.onopen = null;
-        socket.onmessage = null;
-        socket.onerror = null;
-        socket.onclose = null;
-        socket.close();
-      }
+      if (socket) socket.close();
     };
-  }, [selectedPipeline]);
+  }, []);
 
   const fetchPipelineDetails = async (id: string) => {
     try {
@@ -205,82 +236,35 @@ function App() {
     setFormData((prev) => ({ ...prev, [name]: value as string | number }));
   };
 
-  const filterPipelines = (
-    pipelines: Pipeline[],
-    status: string,
-    search: string = "",
-  ): Pipeline[] => {
-    let filtered = pipelines;
-    if (status === "RECENT") {
-      filtered = filtered.filter((p) => {
-        const start = p.start_time ? new Date(p.start_time).getTime() : 0;
-        return Date.now() - start <= 10 * 60 * 1000;
-      });
-    } else if (status !== "TOTAL") {
-      filtered = filtered.filter((p) => p.status === status);
-    }
-    if (search) {
-      const lowerSearch = search.toLowerCase();
-      filtered = filtered.filter(
-        (p) =>
-          p.name.toLowerCase().includes(lowerSearch) ||
-          p.id.toLowerCase().includes(lowerSearch),
-      );
-    }
-    return filtered;
-  };
-
-  useEffect(() => {
-    setFilteredPipelines(
-      filterPipelines(
-        pipelines,
-        displayedStatus,
-        (formData.search ?? "") as string,
-      ),
-    );
-    setCurrentPage(1);
-  }, [pipelines, displayedStatus, formData.search]);
-
   const handleFilter = (status: string) => {
     setDisplayedStatus(status);
     setCurrentPage(1);
   };
 
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case "RECENT":
-        return "#17a2b8";
-      case "COMPLETED":
-        return "#28a745";
-      case "FAILED":
-        return "#dc3545";
-      case "RUNNING":
-        return "#ffc107";
-      default:
-        return "#6c757d";
-    }
-  };
-
-  const filteredPipelinesBySearch: Pipeline[] = useMemo(
-    () =>
-      filterPipelines(
-        pipelines,
-        displayedStatus,
-        (formData.search ?? "") as string,
-      ),
+  const filteredPipelines = useMemo(
+    () => filterPipelines(pipelines, displayedStatus, formData.search),
     [pipelines, displayedStatus, formData.search],
   );
 
-  const sortedPipelinesByStartTime = useMemo(() => {
-    return filteredPipelinesBySearch
-      .sort((a, b) => {
-        const aTime = a.start_time ? new Date(a.start_time).getTime() : 0;
-        const bTime = b.start_time ? new Date(b.start_time).getTime() : 0;
-        return bTime - aTime;
-      })
-      .slice((currentPage - 1) * pageSize, currentPage * pageSize);
-  }, [filteredPipelinesBySearch, currentPage]);
+  const paginatedPipelines = useMemo(
+    () =>
+      sortPipelines(filteredPipelines).slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize,
+      ),
+    [filteredPipelines, currentPage],
+  );
 
+  const renderStepTimes = (step: Step) => (
+    <>
+      {step.start_time && (
+        <> (started: {new Date(step.start_time).toLocaleTimeString()})</>
+      )}
+      {step.end_time && (
+        <> → finished: {new Date(step.end_time).toLocaleTimeString()})</>
+      )}
+    </>
+  );
   return (
     <div id="main-container">
       <Header wsConnected={wsConnected} />
@@ -320,7 +304,7 @@ function App() {
               </tr>
             </thead>
             <tbody>
-              {sortedPipelinesByStartTime.map((p) => (
+              {paginatedPipelines.map((p) => (
                 <tr key={p.id}>
                   <td title={p.id}>{p.id.slice(0, 8)}...</td>
                   <td>{p.name}</td>
@@ -363,21 +347,21 @@ function App() {
             </button>
             <span>
               Page {currentPage} of{" "}
-              {Math.ceil(filteredPipelinesBySearch.length / pageSize)}
+              {Math.ceil(filteredPipelines.length / pageSize)}
             </span>
             <button
               onClick={() =>
                 setCurrentPage((p) =>
                   Math.min(
-                    Math.ceil(filteredPipelinesBySearch.length / pageSize),
+                    Math.ceil(filteredPipelines.length / pageSize),
                     p + 1,
                   ),
                 )
               }
               disabled={
                 currentPage ===
-                  Math.ceil(filteredPipelinesBySearch.length / pageSize) ||
-                filteredPipelinesBySearch.length === 0
+                  Math.ceil(filteredPipelines.length / pageSize) ||
+                filteredPipelines.length === 0
               }
               className="page-btn"
             >
@@ -393,6 +377,9 @@ function App() {
         >
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <h2>{selectedPipeline.name}</h2>
+            <p>
+              <strong>ID:</strong> {selectedPipeline.id}
+            </p>
             <p>
               <strong>Status:</strong>{" "}
               <span
@@ -424,28 +411,19 @@ function App() {
               <ul className="step-list">
                 {[...selectedPipeline.steps]
                   .sort((a, b) => {
-                    const aStart = a.start_time
-                      ? new Date(a.start_time).getTime()
-                      : 0;
-                    const bStart = b.start_time
-                      ? new Date(b.start_time).getTime()
-                      : 0;
+                    const getTime = (date: string | null) =>
+                      date ? new Date(date).getTime() : 0;
+                    const aStart = getTime(a.start_time);
+                    const bStart = getTime(b.start_time);
                     if (aStart !== bStart) return aStart - bStart;
-                    const aEnd = a.end_time
-                      ? new Date(a.end_time).getTime()
-                      : 0;
-                    const bEnd = b.end_time
-                      ? new Date(b.end_time).getTime()
-                      : 0;
+                    const aEnd = getTime(a.end_time);
+                    const bEnd = getTime(b.end_time);
                     return aEnd - bEnd;
                   })
                   .map((step, i) => (
                     <li key={i} className="step-item">
                       <strong>{step.name}</strong>: {step.status}
-                      {step.start_time &&
-                        ` (started: ${new Date(step.start_time).toLocaleTimeString()}`}
-                      {step.end_time &&
-                        ` → finished: ${new Date(step.end_time).toLocaleTimeString()})`}
+                      {renderStepTimes(step)}
                     </li>
                   ))}
               </ul>
