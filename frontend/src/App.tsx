@@ -339,6 +339,13 @@ function App() {
           </table>
           <div className="pagination">
             <button
+              onClick={() => setCurrentPage(1)}
+              className="page-btn"
+              disabled={currentPage === 1}
+            >
+              First
+            </button>
+            <button
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
               className="page-btn"
@@ -347,7 +354,7 @@ function App() {
             </button>
             <span>
               Page {currentPage} of{" "}
-              {Math.ceil(filteredPipelines.length / pageSize)}
+              {Math.max(1, Math.ceil(filteredPipelines.length / pageSize))}
             </span>
             <button
               onClick={() =>
@@ -367,6 +374,17 @@ function App() {
             >
               Next
             </button>
+            <button
+              onClick={() =>
+                setCurrentPage(Math.ceil(filteredPipelines.length / pageSize))
+              }
+              className="page-btn"
+              disabled={
+                currentPage === Math.ceil(filteredPipelines.length / pageSize)
+              }
+            >
+              Last
+            </button>
           </div>
         </section>
       )}
@@ -381,7 +399,7 @@ function App() {
               <strong>ID:</strong> {selectedPipeline.id}
             </p>
             <p>
-              <strong>Status:</strong>{" "}
+              <strong>Status: </strong>
               <span
                 style={{
                   color: getStatusColor(selectedPipeline.status),

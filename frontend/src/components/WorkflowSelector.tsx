@@ -157,13 +157,13 @@ export default function WorkflowSelector({
             {error && <p className="error-msg">{error}</p>}
             <div className="pipeline-count">
               <label htmlFor="pipeline-count-input">
-                Number of pipelines to start (max 10,000):
+                Number of pipelines to start (max 1,000):
               </label>
               <input
                 id="pipeline-count-input"
                 type="number"
                 min={1}
-                max={10000}
+                max={1000}
                 value={formData["count"] ?? 1}
                 onChange={(e) => {
                   setError("");
@@ -171,12 +171,12 @@ export default function WorkflowSelector({
                 }}
                 onBlur={(e) => {
                   const val = Number(e.target.value);
-                  if (val > 10000) {
+                  if (val > 1000) {
                     setError(
-                      "Number of pipelines to start cannot exceed 10,000",
+                      "Number of pipelines to start cannot exceed 1,000",
                     );
-                    handleParamChange("count", 10000);
-                  } else if (val < 1) {
+                    handleParamChange("count", 1000);
+                  } else if (val < 1 || isNaN(val)) {
                     setError("Number of pipelines to start must be at least 1");
                     handleParamChange("count", 1);
                   }
