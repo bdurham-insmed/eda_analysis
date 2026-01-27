@@ -12,7 +12,7 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
 
 ## Tech Stack
 
-- Python 3.12+
+- Python 3.12
 - Golang 1.24.5
 - Apache Kafka
 - React + Vite (TypeScript)
@@ -90,7 +90,7 @@ improving fault tolerance and scalability.
 
 The topic will be partitioned to allow multiple consumers to read from it concurrently, this is found in the `docker-compose.yml` file under the kafka-init section.
 
-A maximum of 6 state_tracker instances can be run in parallel with the current topic partitioning - more can be run but will not improve performance.
+A maximum of six state_tracker instances can be run in parallel with the current topic partitioning—more can be run but will not improve performance.
 To scale up the number of state_tracker instances, run:
 
 ```bash
