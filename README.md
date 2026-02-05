@@ -5,10 +5,10 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
 ## Features
 
 - Event-driven pipeline monitoring with Kafka
-- Python-based services for event production and consumption
+- Microservices architecture with Python and Go
 - Scalable architecture using Docker Compose
 - Example of state tracking and event processing
-- Real-time pipeline state updates via WebSocket
+- Real-time pipeline state updates via WebSockets
 
 ## Tech Stack
 
@@ -39,10 +39,11 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
   - Orchestrates services and Kafka broker
 
 ## Deeper Dives
-- [Apache Kafka Overview and Usage](docs/Apache%20Kafka.md)
-- [WebSockets: Overview and Usage](docs/WebSockets.md)
-- [Event Driven Architecture Concepts](docs/Event%20Driven%20Architecture.md)
+- [Apache Kafka](docs/Apache%20Kafka.md)
+- [WebSockets](docs/WebSockets.md)
 - [Serverless Architecture Concepts](docs/Serverless.md)
+- [Event Driven Architecture Concepts](docs/Event%20Driven%20Architecture.md)
+
 ## Running the Project locally
 
 1. **Clone the repository:**
