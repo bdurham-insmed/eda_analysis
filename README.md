@@ -41,8 +41,8 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
 ## Deeper Dives
 - [Apache Kafka](docs/Apache%20Kafka.md)
 - [WebSockets](docs/WebSockets.md)
-- [Serverless Architecture Concepts](docs/Serverless.md)
-- [Event Driven Architecture Concepts](docs/Event%20Driven%20Architecture.md)
+- [Serverless Architecture](docs/Serverless.md)
+- [Event Driven Architecture](docs/Event%20Driven%20Architecture.md)
 
 ## Running the Project locally
 
