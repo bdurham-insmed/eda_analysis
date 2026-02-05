@@ -38,6 +38,11 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
 - [docker-compose.yml](docker-compose.yaml)
   - Orchestrates services and Kafka broker
 
+## Deeper Dives
+- [Apache Kafka Overview and Usage](docs/Apache%20Kafka.md)
+- [WebSockets: Overview and Usage](docs/WebSockets.md)
+- [Event Driven Architecture Concepts](docs/Event%20Driven%20Architecture.md)
+- [Serverless Architecture Concepts](docs/Serverless.md)
 ## Running the Project locally
 
 1. **Clone the repository:**

@@ -5,7 +5,7 @@ export type Workflow = {
   parameters: Parameter[];
 };
 
-type Parameter = {
+export type Parameter = {
   name: string;
   type: string;
   required?: boolean;
@@ -14,7 +14,7 @@ type Parameter = {
   description?: string;
 };
 
-type Step = {
+export type Step = {
   name: string;
   status: string;
   start_time: string | null;

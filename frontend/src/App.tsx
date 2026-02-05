@@ -5,62 +5,8 @@ import WorkflowSelector from "./components/WorkflowSelector.tsx";
 import { API_BASE, INITIATOR_BASE, WS_URL } from "./constants.ts";
 import FilterPipelinesSection from "./components/FilterPipelinesSection.tsx";
 import Header from "./components/Header.tsx";
-
-type Parameter = {
-  name: string;
-  type: string;
-  required?: boolean;
-  options?: string[];
-  default?: string;
-  description?: string;
-};
-
-type Workflow = {
-  id: string;
-  name: string;
-  description?: string;
-  parameters: Parameter[];
-};
-
-type Step = {
-  name: string;
-  status: string;
-  start_time: string | null;
-  end_time: string | null;
-};
-
-type Pipeline = {
-  id: string;
-  name: string;
-  status: string;
-  start_time: string | null;
-  end_time: string | null;
-  steps?: Step[];
-};
-
-type WebSocketUpdate = {
-  pipeline_id: string;
-  name: string;
-  status: string;
-  event_type: string;
-  step_name?: string;
-  timestamp: number;
-};
-
-const getStatusColor = (status: string): string => {
-  switch (status) {
-    case "RECENT":
-      return "#17a2b8";
-    case "COMPLETED":
-      return "#28a745";
-    case "FAILED":
-      return "#dc3545";
-    case "RUNNING":
-      return "#ffc107";
-    default:
-      return "#6c757d";
-  }
-};
+import type { Pipeline, Workflow, Step, WebSocketUpdate } from "./types.ts";
+import { getStatusColour } from "./constants.ts";
 
 const getElapsedTime = (pipeline: Pipeline): string => {
   if (!pipeline.start_time) return "—";
@@ -311,7 +257,7 @@ function App() {
                   <td>
                     <span
                       className="status-badge"
-                      style={{ background: getStatusColor(p.status) }}
+                      style={{ background: getStatusColour(p.status) }}
                     >
                       {p.status}
                     </span>
@@ -402,7 +348,7 @@ function App() {
               <strong>Status: </strong>
               <span
                 style={{
-                  color: getStatusColor(selectedPipeline.status),
+                  color: getStatusColour(selectedPipeline.status),
                   fontWeight: "bold",
                 }}
               >

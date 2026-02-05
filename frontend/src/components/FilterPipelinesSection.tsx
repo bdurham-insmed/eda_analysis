@@ -1,5 +1,6 @@
 import type { Pipeline } from "../types.ts";
 import "./FilterPipelinesSection.css";
+import { getStatusColour } from "../constants.ts";
 
 type Props = {
   pipelines: Pipeline[];
@@ -18,21 +19,6 @@ export default function FilterPipelinesSection({
 }: Props) {
   const allStatuses = ["RECENT", "RUNNING", "FAILED", "COMPLETED", "TOTAL"];
 
-  const getStatusColor = (status: string): string => {
-    switch (status) {
-      case "RECENT":
-        return "#17a2b8";
-      case "COMPLETED":
-        return "#28a745";
-      case "FAILED":
-        return "#dc3545";
-      case "RUNNING":
-        return "#ffc107";
-      default:
-        return "#6c757d";
-    }
-  };
-
   return (
     <details open={false}>
       <summary>
@@ -50,7 +36,7 @@ export default function FilterPipelinesSection({
             >
               <h3
                 style={{
-                  color: getStatusColor(status),
+                  color: getStatusColour(status),
                 }}
               >
                 {status}
