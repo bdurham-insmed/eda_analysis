@@ -33,8 +33,10 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
       - FastAPI service to initiate starting pipelines
     - [state_tracker/](services/state_tracker)
       - Consumes events and manages pipeline states (updates DB)
-    - [metric_collector](services/metric_collector)
+    - [metric_collector/](services/metric_collector)
       - Go service to print pipeline events to stdout (demonstration of multi-language consumers in a single space; may actually do metric collection in future if I have time...)
+    - [high_throughput/](services/high_throughput)
+      - Go service to produce a high volume of events to Kafka. Just to demonstrate the ability of the system to handle lots of events to a different topic. Doesn't integrate into the pipeline dashboard flow. 
 - [docker-compose.yml](docker-compose.yaml)
   - Orchestrates services and Kafka broker
 
