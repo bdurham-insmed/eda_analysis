@@ -136,7 +136,6 @@ services:
     build:
       context: .
       dockerfile: services/pipeline_initiator/Dockerfile
-    container_name: initiator
     ports:
       - "8001:8001"
     depends_on:
@@ -145,7 +144,6 @@ services:
 
   frontend:
     build: ./frontend
-    container_name: frontend
     ports:
       - "3000:80"
     depends_on:
