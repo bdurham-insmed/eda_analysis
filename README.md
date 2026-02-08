@@ -83,24 +83,13 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
 
 ## WebSocket Integration
 
-The API server receives real-time pipeline state and event updates from the `state_tracker` service, which pushes updates to a dedicated API endpoint. The API server then broadcasts these updates to all connected frontend clients via WebSocket, enabling instant feedback and live monitoring of pipeline progress.
+The API server receives real-time pipeline state and event updates from the `state_tracker` service, which pushes updates to a dedicated API endpoint. The API server then broadcasts these updates to the frontend via WebSocket, enabling live monitoring of pipeline progress.
 
 - The frontend establishes a WebSocket connection to the API server.
 - As the `state_tracker` processes events, it sends state changes to the API server, which relays them to all connected clients.
 - This ensures the dashboard reflects the latest pipeline activity in near real-time.
 
-## Scaling
+## Consumer Scaling
+The `pipeline-events` topic has been partitioned to allow multiple consumers of the same type to read from it concurrently, this is found in the `docker-compose.yml` file under the `kafka-init` section.
 
-Multiple state_tracker instances can be run in parallel, currently it's set as 3 in the `docker-compose.yml` file.
-
-Kafka's consumer group mechanism ensures events are distributed and processed efficiently,
-improving fault tolerance and scalability.
-
-The topic will be partitioned to allow multiple consumers to read from it concurrently, this is found in the `docker-compose.yml` file under the kafka-init section.
-
-A maximum of six state_tracker instances can be run in parallel with the current topic partitioning—more can be run but will not improve performance.
-To scale up the number of state_tracker instances, run:
-
-```bash
-docker-compose up --scale state_tracker=6
-```
+In this project, multiple state_tracker instances will be run in parallel.  The number of `state_tracker` services to run is set as 6 in the `docker-compose.yml` file, due to the number of partitions in the Kafka topic.
