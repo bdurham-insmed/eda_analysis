@@ -9,11 +9,12 @@ from confluent_kafka import Producer
 from dotenv.main import load_dotenv
 from fastapi import FastAPI
 from fastapi import HTTPException
+from fastapi import status
 from pydantic import BaseModel
 from starlette.middleware.cors import CORSMiddleware
 
 load_dotenv()
-
+type WorkflowType = dict[str, str | list[dict[str, str | list[str]]]]
 app = FastAPI(title="Pipeline Initiator Service")
 KAFKA_BROKER = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 kafka_producer = Producer({"bootstrap.servers": KAFKA_BROKER})
@@ -26,6 +27,7 @@ class PipelineRequest(BaseModel):
 
     workflow_id: str
     parameters: dict = {}
+    count: int
 
 
 class Step(BaseModel):
@@ -229,10 +231,13 @@ def list_workflows() -> list[dict]:
     ]
 
 
-@app.post("/jobs")
-def start_job(request: PipelineRequest) -> dict:
+@app.post("/jobs", status_code=status.HTTP_202_ACCEPTED)
+def start_jobs(request: PipelineRequest) -> dict:
     """
-    Enables starting a new pipeline job.
+    Starts a new pipeline job based on the provided workflow ID and parameters.
+    Validates the workflow ID and parameters before starting the job.
+    If request.count is provided, starts the specified number of pipeline jobs with the same parameters.
+
     :param request: Pipeline request containing workflow ID and parameters.
     :return: A dictionary containing the pipeline ID.
     """
@@ -248,13 +253,25 @@ def start_job(request: PipelineRequest) -> dict:
             detail=f"Unknown parameters provided: {', '.join(unknown_params)}",
         )
 
+    if request.count and 2500 >= request.count > 0:
+        for _ in range(request.count):
+            pipeline_start(workflow, request.parameters)
+    else:
+        raise HTTPException(status_code=400, detail="Invalid count provided. Must be between 1 and 2500.")
+    return {"message": "Pipeline job(s) have been received."}
+
+
+def pipeline_start(workflow: WorkflowType, parameters: dict) -> None:
+    """
+    Starts a pipeline job by creating a PipelineSimulator instance and running it in a separate thread.
+    :param workflow: Workflow details containing name and parameters.
+    :param parameters: Parameters for the pipeline execution.
+    :return: None
+    """
     pipeline_id = str(uuid4())
-    params = request.parameters
-    if params.get("simulate", True):
+    if parameters.get("simulate", True):
         simulator = PipelineSimulator(pipeline_id, str(workflow["name"]), kafka_producer)
         thread = Thread(target=simulator.simulate)
         thread.start()
     else:
         raise HTTPException(status_code=501, detail="No real pipeline execution implemented.")
-
-    return {"pipeline_id": pipeline_id}

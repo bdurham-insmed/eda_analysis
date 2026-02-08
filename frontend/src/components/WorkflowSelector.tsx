@@ -1,7 +1,7 @@
-import type { Workflow, Pipeline } from "../types.ts";
+import type { Workflow } from "../types.ts";
 import { useRef, useState } from "react";
 import axios from "axios";
-import { API_BASE, INITIATOR_BASE } from "../constants.ts";
+import { INITIATOR_BASE } from "../constants.ts";
 import "./WorkflowSelector.css";
 
 type Props = {
@@ -10,7 +10,6 @@ type Props = {
   error: string;
   setError: (msg: string) => void;
   setLoading: (loading: boolean) => void;
-  setPipelines: (pipelines: Pipeline[]) => void;
 };
 
 export default function WorkflowSelector({
@@ -18,8 +17,7 @@ export default function WorkflowSelector({
   error,
   loading,
   setError,
-  setLoading,
-  setPipelines,
+  setLoading
 }: Props) {
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(
     null,
@@ -42,16 +40,13 @@ export default function WorkflowSelector({
     setLoading(true);
     setError("");
     try {
-      for (let i = 0; i < count; i++) {
-        await axios.post(`${INITIATOR_BASE}/jobs`, {
+          await axios.post(`${INITIATOR_BASE}/jobs`, {
           workflow_id: selectedWorkflow.id,
           parameters: Object.fromEntries(
-            Object.entries(formData).filter(([key]) => key !== "count"),
+            Object.entries(formData).filter(([key]) => key !== "count")
           ),
+            count: count
         });
-      }
-      const res = await axios.get<Pipeline[]>(`${API_BASE}/pipelines`);
-      setPipelines(res.data);
       setSelectedWorkflow(null);
       setFormData({});
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -157,13 +152,13 @@ export default function WorkflowSelector({
             {error && <p className="error-msg">{error}</p>}
             <div className="pipeline-count">
               <label htmlFor="pipeline-count-input">
-                Number of pipelines to start (max 1,000):
+                Number of pipelines to start (max 2,500):
               </label>
               <input
                 id="pipeline-count-input"
                 type="number"
                 min={1}
-                max={1000}
+                max={2500}
                 value={formData["count"] ?? 1}
                 onChange={(e) => {
                   setError("");
@@ -171,11 +166,11 @@ export default function WorkflowSelector({
                 }}
                 onBlur={(e) => {
                   const val = Number(e.target.value);
-                  if (val > 1000) {
+                  if (val > 2500) {
                     setError(
-                      "Number of pipelines to start cannot exceed 1,000",
+                      "Number of pipelines to start cannot exceed 2,500",
                     );
-                    handleParamChange("count", 1000);
+                    handleParamChange("count", 2500);
                   } else if (val < 1 || isNaN(val)) {
                     setError("Number of pipelines to start must be at least 1");
                     handleParamChange("count", 1);

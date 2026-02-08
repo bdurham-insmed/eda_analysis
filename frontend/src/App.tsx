@@ -220,7 +220,6 @@ function App() {
         error={error}
         setError={setError}
         setLoading={setLoading}
-        setPipelines={setPipelines}
       />
       <FilterPipelinesSection
         pipelines={pipelines}

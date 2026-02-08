@@ -101,7 +101,7 @@ services:
       context: .
       dockerfile: services/state_tracker/Dockerfile
     deploy:
-      replicas: 3
+      replicas: 6
     depends_on:
       kafka:
         condition: service_healthy
@@ -122,7 +122,7 @@ services:
       kafka:
         condition: service_healthy
 
-  high_throughput_producer:
+  high_throughput:
     build:
       context: .
       dockerfile: services/high_throughput/Dockerfile
