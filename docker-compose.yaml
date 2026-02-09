@@ -149,5 +149,12 @@ services:
     depends_on:
       - api
 
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./grafana-data:/var/lib/grafana
+
 volumes:
   postgres_data:
