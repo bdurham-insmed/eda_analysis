@@ -55,7 +55,7 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
    ```
 2. **Start services using Docker Compose:**
    ```bash
-    docker-compose up --build
+    docker compose up --build
    ```
 3. **Access the tools:**
    - **UI**: Open your browser and navigate [here](http://localhost:3000) to view the monitoring dashboard.
@@ -78,7 +78,7 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
    The dashboard will update as events are processed. To visualise the events in Kafka UI, navigate to the 'Topics' section and select the `pipeline-events` topic.
 6. **Shut down services and clear storage:**
    ```bash
-   docker-compose down -v
+   docker compose down -v
    ```
 
 ## WebSocket Integration
