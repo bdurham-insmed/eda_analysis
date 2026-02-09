@@ -41,7 +41,7 @@ func main() {
 			for i := range batch {
 				p.Produce(&kafka.Message{
 					TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-					Value:          []byte(fmt.Sprintf("%d-%d", w+1, i)),
+					Value:          fmt.Appendf(nil, "%d-%d", w+1, i),
 				}, nil)
 			}
 		}(w)
