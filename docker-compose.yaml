@@ -31,6 +31,16 @@ services:
       timeout: 5s
       retries: 5
 
+  kafka-exporter:
+    image: danielqsj/kafka-exporter
+    ports:
+      - "9308:9308"
+    command: ["--kafka.server=kafka:9092"]
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+
   kafka-init:
     image: confluentinc/cp-kafka:7.7.1
     depends_on:
@@ -156,5 +166,11 @@ services:
     volumes:
       - ./grafana-data:/var/lib/grafana
 
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
 volumes:
   postgres_data:
