@@ -93,3 +93,12 @@ The API server receives real-time pipeline state and event updates from the `sta
 The `pipeline-events` topic has been partitioned to allow multiple consumers of the same type to read from it concurrently, this is found in the `docker-compose.yml` file under the `kafka-init` section.
 
 In this project, multiple state_tracker instances will be run in parallel.  The number of `state_tracker` services to run is set as 6 in the `docker-compose.yml` file, due to the number of partitions in the Kafka topic.
+
+## Monitoring
+Monitoring is implemented using Prometheus and Grafana.
+- Prometheus is configured to scrape metrics from `kafka_exporter` service. 
+  - Prometheus can be visualised [here](http://localhost:9090). 
+- Grafana is set up to build dashboards based on the metrics collected by Prometheus.
+  - Grafana can be visualised [here](http://localhost:3001). You can log in with username `admin` and password `admin` to view the dashboard.
+  - You will need to build out the Grafana dashboard yourself using the Prometheus data source and the metrics collected by `kafka_exporter`. 
+  - There are publicly available Grafana dashboards for Kafka monitoring that you can use as a starting point, such as [this one](https://grafana.com/grafana/dashboards/15465-kafka-exporter-overview/) which is designed for monitoring Kafka clusters.
