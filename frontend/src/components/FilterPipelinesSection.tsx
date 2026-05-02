@@ -43,8 +43,7 @@ export default function FilterPipelinesSection({
               </h3>
               {status === "RECENT" ? (
                 <small>
-                  {" "}
-                  Pipelines started in the last 10 minutes:{" "}
+                  Pipelines started in the last 10 minutes:
                   {
                     pipelines.filter((p) => {
                       const start = p.start_time
