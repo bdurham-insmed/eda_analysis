@@ -22,11 +22,17 @@ def create_version(
     """
     new_id = conn.execute(
         text("""
-            INSERT INTO workflow_versions (workflow_id, version_number, status, description)
-            VALUES (:wid, :vnum, 'draft', :description)
+            INSERT INTO workflow_versions
+                (workflow_id, version_number, version_label, status, description)
+            VALUES (:wid, :vnum, :label, 'draft', :description)
             RETURNING id
         """),
-        {"wid": workflow_id, "vnum": version_number, "description": content.description},
+        {
+            "wid": workflow_id,
+            "vnum": version_number,
+            "label": content.version_label,
+            "description": content.description,
+        },
     ).scalar_one()
     for pid in content.parameter_ids:
         conn.execute(
@@ -59,7 +65,7 @@ def get_workflow_version(conn: Connection, version_id: int) -> dict | None:
     """
     row = conn.execute(
         text("""
-            SELECT id, workflow_id, version_number, status, description,
+            SELECT id, workflow_id, version_number, version_label, status, description,
                    revision, created_at, published_at, archived_at
             FROM workflow_versions WHERE id = :id
         """),
@@ -91,12 +97,13 @@ def get_workflow_version(conn: Connection, version_id: int) -> dict | None:
         "id": row[0],
         "workflow_id": row[1],
         "version_number": row[2],
-        "status": row[3],
-        "description": row[4],
-        "revision": row[5],
-        "created_at": row[6],
-        "published_at": row[7],
-        "archived_at": row[8],
+        "version_label": row[3],
+        "status": row[4],
+        "description": row[5],
+        "revision": row[6],
+        "created_at": row[7],
+        "published_at": row[8],
+        "archived_at": row[9],
         "parameters": [
             {
                 "id": p[0],
@@ -169,7 +176,7 @@ def clone_version(
         raise ValueError("workflow_archived")
     src = conn.execute(
         text("""
-            SELECT workflow_id, description FROM workflow_versions WHERE id = :id
+            SELECT workflow_id, description, version_label FROM workflow_versions WHERE id = :id
         """),
         {"id": source_version_id},
     ).fetchone()
@@ -178,11 +185,12 @@ def clone_version(
     new_number = _next_version_number(conn, workflow_id)
     new_id = conn.execute(
         text("""
-            INSERT INTO workflow_versions (workflow_id, version_number, status, description)
-            VALUES (:wid, :vnum, 'draft', :description)
+            INSERT INTO workflow_versions
+                (workflow_id, version_number, version_label, status, description)
+            VALUES (:wid, :vnum, :label, 'draft', :description)
             RETURNING id
         """),
-        {"wid": workflow_id, "vnum": new_number, "description": src[1]},
+        {"wid": workflow_id, "vnum": new_number, "label": src[2], "description": src[1]},
     ).scalar_one()
     conn.execute(
         text("""
@@ -231,6 +239,7 @@ def update_version(
         text("""
             UPDATE workflow_versions
             SET description = :description,
+                version_label = :label,
                 revision = revision + 1
             WHERE id = :id AND revision = :expected
             RETURNING revision
@@ -238,6 +247,7 @@ def update_version(
         {
             "id": version_id,
             "description": payload.description,
+            "label": payload.version_label,
             "expected": payload.revision,
         },
     )

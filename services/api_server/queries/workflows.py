@@ -39,7 +39,14 @@ def list_workflows(conn: Connection, include_archived: bool) -> list[dict]:
                       AND v.status = 'published'
                       AND v.archived_at IS NULL
                     ORDER BY v.version_number DESC LIMIT 1
-                ) AS latest_published_number
+                ) AS latest_published_number,
+                (
+                    SELECT v.version_label FROM workflow_versions v
+                    WHERE v.workflow_id = w.id
+                      AND v.status = 'published'
+                      AND v.archived_at IS NULL
+                    ORDER BY v.version_number DESC LIMIT 1
+                ) AS latest_published_label
             FROM workflows w
             {archived_filter}
             ORDER BY w.id DESC
@@ -55,6 +62,7 @@ def list_workflows(conn: Connection, include_archived: bool) -> list[dict]:
             "latest_version_number": r[5],
             "latest_published_version_id": r[6],
             "latest_published_version_number": r[7],
+            "latest_published_version_label": r[8],
         }
         for r in rows
     ]
@@ -76,7 +84,7 @@ def get_workflow(conn: Connection, workflow_id: int) -> dict | None:
         return None
     version_rows = conn.execute(
         text("""
-            SELECT id, workflow_id, version_number, status, description,
+            SELECT id, workflow_id, version_number, version_label, status, description,
                    created_at, published_at, archived_at
             FROM workflow_versions
             WHERE workflow_id = :id
@@ -97,11 +105,12 @@ def get_workflow(conn: Connection, workflow_id: int) -> dict | None:
                 "id": v[0],
                 "workflow_id": v[1],
                 "version_number": v[2],
-                "status": v[3],
-                "description": v[4],
-                "created_at": v[5],
-                "published_at": v[6],
-                "archived_at": v[7],
+                "version_label": v[3],
+                "status": v[4],
+                "description": v[5],
+                "created_at": v[6],
+                "published_at": v[7],
+                "archived_at": v[8],
             }
             for v in version_rows
         ],

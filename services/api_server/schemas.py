@@ -71,6 +71,7 @@ class WorkflowVersionContentIn(BaseModel):
     parameter_ids: list[int] = Field(default_factory=list)
     steps: list[WorkflowStepIn] = Field(min_length=1)
     description: str | None = None
+    version_label: str | None = Field(default=None, max_length=64)
 
     @model_validator(mode="after")
     def _validate_step_orders(self) -> "WorkflowVersionContentIn":
@@ -116,6 +117,7 @@ class WorkflowVersionSummary(BaseModel):
     id: int
     workflow_id: int
     version_number: int
+    version_label: str | None
     status: VersionStatusLiteral
     description: str | None
     created_at: datetime
@@ -131,6 +133,7 @@ class WorkflowVersionOut(BaseModel):
     id: int
     workflow_id: int
     version_number: int
+    version_label: str | None
     status: VersionStatusLiteral
     description: str | None
     revision: int
@@ -194,3 +197,4 @@ class WorkflowSummary(BaseModel):
     latest_version_number: int | None
     latest_published_version_id: int | None
     latest_published_version_number: int | None
+    latest_published_version_label: str | None

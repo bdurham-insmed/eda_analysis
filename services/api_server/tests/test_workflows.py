@@ -48,6 +48,42 @@ def test_create_workflow_creates_v1_draft(client):
     assert len(detail["steps"]) == 2
 
 
+def test_version_label_round_trip(client):
+    """
+    A version_label set on create round-trips through GET, and update can change it.
+    """
+    body = {
+        "name": "labelled",
+        "description": None,
+        "initial_version": {
+            "parameter_ids": [],
+            "steps": [{"step_order": 0, "step_name": "go", "step_type": "processing"}],
+            "description": None,
+            "version_label": "1.0.0",
+        },
+    }
+    res = client.post("/workflows", json=body)
+    assert res.status_code == 201
+    v1 = res.json()["versions"][0]
+    assert v1["version_label"] == "1.0.0"
+
+    detail = client.get(f"/workflow-versions/{v1['id']}").json()
+    assert detail["version_label"] == "1.0.0"
+
+    updated = client.put(
+        f"/workflow-versions/{v1['id']}",
+        json={
+            "parameter_ids": [],
+            "steps": [{"step_order": 0, "step_name": "go", "step_type": "processing"}],
+            "description": None,
+            "version_label": "1.1.0",
+            "revision": detail["revision"],
+        },
+    )
+    assert updated.status_code == 200
+    assert updated.json()["version_label"] == "1.1.0"
+
+
 def test_create_workflow_publish_initial_version(client):
     """
     POST /workflows with publish_initial_version=true publishes v1 in the same transaction.

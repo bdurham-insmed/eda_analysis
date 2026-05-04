@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS workflow_versions (
     id SERIAL PRIMARY KEY,
     workflow_id INTEGER NOT NULL REFERENCES workflows(id) ON DELETE CASCADE,
     version_number INTEGER NOT NULL,
+    version_label VARCHAR(64),
     status VARCHAR(20) NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
     description TEXT,
     revision INTEGER NOT NULL DEFAULT 1,
