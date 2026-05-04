@@ -15,6 +15,11 @@ COPY uv.lock ./
 COPY services/api_server/pyproject.toml ./
 
 COPY services/api_server/main.py .
+COPY services/api_server/schemas.py .
+COPY services/api_server/db.py .
+COPY services/api_server/websocket_manager.py .
+COPY services/api_server/queries ./queries
+COPY services/api_server/routes ./routes
 
 RUN uv lock && uv sync --frozen
 
