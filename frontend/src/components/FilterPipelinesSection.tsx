@@ -1,6 +1,5 @@
 import type { Pipeline } from "../types.ts";
 import "./FilterPipelinesSection.css";
-import { getStatusColour } from "../constants.ts";
 
 type Props = {
   pipelines: Pipeline[];
@@ -10,6 +9,24 @@ type Props = {
   handleFilter: (status: string) => void;
 };
 
+type StatusKey = "TOTAL" | "RUNNING" | "COMPLETED" | "FAILED" | "RECENT";
+
+const KPI_DEFS: Array<{ key: StatusKey; label: string; dotClass: string; sub: string }> = [
+  { key: "TOTAL", label: "All pipelines", dotClass: "kpi-dot--total", sub: "All time" },
+  { key: "RUNNING", label: "Running", dotClass: "kpi-dot--running", sub: "In progress" },
+  { key: "COMPLETED", label: "Completed", dotClass: "kpi-dot--completed", sub: "Successful" },
+  { key: "FAILED", label: "Failed", dotClass: "kpi-dot--failed", sub: "Errored" },
+  { key: "RECENT", label: "Recent", dotClass: "kpi-dot--recent", sub: "Last 10 minutes" },
+];
+
+const IconSearch = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7" />
+    <path d="m20 20-3.5-3.5" />
+  </svg>
+);
+
 export default function FilterPipelinesSection({
   pipelines,
   formData,
@@ -17,63 +34,48 @@ export default function FilterPipelinesSection({
   handleParamChange,
   handleFilter,
 }: Props) {
-  const allStatuses = ["RECENT", "RUNNING", "FAILED", "COMPLETED", "TOTAL"];
+  const counts: Record<StatusKey, number> = {
+    TOTAL: pipelines.length,
+    RUNNING: pipelines.filter((p) => p.status === "RUNNING").length,
+    COMPLETED: pipelines.filter((p) => p.status === "COMPLETED").length,
+    FAILED: pipelines.filter((p) => p.status === "FAILED").length,
+    RECENT: pipelines.filter((p) => {
+      const start = p.start_time ? new Date(p.start_time).getTime() : 0;
+      // eslint-disable-next-line react-hooks/purity
+      return Date.now() - start <= 10 * 60 * 1000;
+    }).length,
+  };
 
   return (
-    <details open={false}>
-      <summary>
-        <h2>Filter Pipelines</h2>
-      </summary>
-      <section>
-        <div className="pipeline-summary">
-          {allStatuses.map((status) => (
-            <div
-              className={`pipeline-summary-card${displayedStatus === status ? " selected" : ""}`}
-              key={status}
-              onClick={() => handleFilter(status)}
-              onMouseEnter={(e) => e.currentTarget.classList.add("hover")}
-              onMouseLeave={(e) => e.currentTarget.classList.remove("hover")}
-            >
-              <h3
-                style={{
-                  color: getStatusColour(status),
-                }}
-              >
-                {status}
-              </h3>
-              {status === "RECENT" ? (
-                <small>
-                  Pipelines started in the last 10 minutes:
-                  {
-                    pipelines.filter((p) => {
-                      const start = p.start_time
-                        ? new Date(p.start_time).getTime()
-                        : 0;
-                      return Date.now() - start <= 10 * 60 * 1000;
-                    }).length
-                  }{" "}
-                </small>
-              ) : (
-                <small>
-                  There are{" "}
-                  {status === "TOTAL"
-                    ? pipelines.length
-                    : pipelines.filter((p) => p.status === status).length}{" "}
-                  pipeline(s)
-                </small>
-              )}
-            </div>
-          ))}
+    <section className="page-section">
+      <div className="kpi-grid">
+        {KPI_DEFS.map(({ key, label, dotClass, sub }) => (
+          <button
+            key={key}
+            type="button"
+            className={`kpi ${displayedStatus === key ? "active" : ""}`}
+            onClick={() => handleFilter(key)}
+          >
+            <span className="kpi-label">
+              <span className={`kpi-dot ${dotClass}`} />
+              {label}
+            </span>
+            <div className="kpi-value">{counts[key].toLocaleString()}</div>
+            <div className="kpi-sub">{sub}</div>
+          </button>
+        ))}
+      </div>
+      <div className="search-row">
+        <div className="search-input-wrap">
+          <IconSearch />
+          <input
+            type="search"
+            placeholder="Search by name or pipeline ID"
+            value={formData.search ?? ""}
+            onChange={(e) => handleParamChange("search", e.target.value)}
+          />
         </div>
-        <input
-          type="text"
-          placeholder="Search by name or ID"
-          value={formData.search ?? ""}
-          onChange={(e) => handleParamChange("search", e.target.value)}
-          className="search-input"
-          style={{ marginBottom: 12, width: 250 }}
-        />
-      </section>
-    </details>
+      </div>
+    </section>
   );
 }

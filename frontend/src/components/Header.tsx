@@ -1,23 +1,24 @@
 import "./Header.css";
 
 type HeaderProps = {
+  title: string;
   wsConnected: boolean;
 };
 
-export default function Header({ wsConnected }: HeaderProps) {
+export default function Header({ title, wsConnected }: HeaderProps) {
   return (
-    <header className="app-header">
-      <div className="header-left">
+    <header className="topbar">
+      <div className="topbar-title">{title}</div>
+      <div className="topbar-actions">
         <span
-          className={`ws-dot ${wsConnected ? "connected" : "disconnected"}`}
-          title={wsConnected ? "WebSocket Connected" : "WebSocket Disconnected"}
-        ></span>
-        <span className="ws-status-text">
-          {wsConnected ? "Connected" : "Disconnected"}
+          className={`ws-pill ${
+            wsConnected ? "ws-pill--connected" : "ws-pill--disconnected"
+          }`}
+          title={wsConnected ? "Real-time stream connected" : "Stream disconnected"}
+        >
+          <span className="ws-dot" />
+          {wsConnected ? "Live" : "Disconnected"}
         </span>
-      </div>
-      <div className="header-center">
-        <h1>Pipeline Monitoring Dashboard</h1>
       </div>
     </header>
   );
