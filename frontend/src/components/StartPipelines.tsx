@@ -393,6 +393,9 @@ export default function StartPipelines({
                       <span className="workflow-tile-meta-item">
                         <IconVersion />
                         latest v{wf.latest_published_version_number}
+                        {wf.latest_published_version_label
+                          ? ` (${wf.latest_published_version_label})`
+                          : ""}
                       </span>
                       <span className="workflow-tile-meta-item">
                         <IconParameter />
@@ -440,6 +443,7 @@ export default function StartPipelines({
                     {selectableVersions.map((v) => (
                       <option key={v.id} value={v.id}>
                         v{v.version_number}
+                        {v.version_label ? ` (${v.version_label})` : ""}
                         {v.description ? ` — ${v.description}` : ""}
                       </option>
                     ))}

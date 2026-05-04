@@ -236,7 +236,14 @@ export default function WorkflowDetailView({
                 <tbody>
                   {workflow.versions.map((v) => (
                     <tr key={v.id}>
-                      <td className="mono">v{v.version_number}</td>
+                      <td className="mono">
+                        v{v.version_number}
+                        {v.version_label && (
+                          <span className="muted" style={{ marginLeft: 6 }}>
+                            {v.version_label}
+                          </span>
+                        )}
+                      </td>
                       <td>
                         <span className={versionStatusClass(v)}>
                           {versionStatusLabel(v)}

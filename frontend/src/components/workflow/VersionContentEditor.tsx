@@ -6,6 +6,8 @@ type Props = {
   mode: "create" | "edit";
   versionDescription: string;
   onVersionDescription: (s: string) => void;
+  versionLabel: string;
+  onVersionLabel: (s: string) => void;
   parameters: Parameter[];
   selectedParamIds: number[];
   setSelectedParamIds: React.Dispatch<React.SetStateAction<number[]>>;
@@ -26,6 +28,8 @@ export default function VersionContentEditor({
   mode,
   versionDescription,
   onVersionDescription,
+  versionLabel,
+  onVersionLabel,
   parameters,
   selectedParamIds,
   setSelectedParamIds,
@@ -52,17 +56,32 @@ export default function VersionContentEditor({
           <h2>{mode === "create" ? "Initial version (v1)" : "Version details"}</h2>
         </div>
         <div className="card-body">
-          <div className="field">
-            <label htmlFor="version-desc">Description / changelog</label>
-            <input
-              id="version-desc"
-              type="text"
-              autoComplete="off"
-              value={versionDescription}
-              onChange={(e) => onVersionDescription(e.target.value)}
-              disabled={readOnly}
-              placeholder="What's new in this version?"
-            />
+          <div className="param-grid">
+            <div className="field">
+              <label htmlFor="version-label">Label (optional)</label>
+              <input
+                id="version-label"
+                type="text"
+                autoComplete="off"
+                value={versionLabel}
+                onChange={(e) => onVersionLabel(e.target.value)}
+                disabled={readOnly}
+                placeholder="e.g. 1.0.0, rc-fastq, stable"
+                maxLength={64}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="version-desc">Description / changelog</label>
+              <input
+                id="version-desc"
+                type="text"
+                autoComplete="off"
+                value={versionDescription}
+                onChange={(e) => onVersionDescription(e.target.value)}
+                disabled={readOnly}
+                placeholder="What's new in this version?"
+              />
+            </div>
           </div>
         </div>
       </section>

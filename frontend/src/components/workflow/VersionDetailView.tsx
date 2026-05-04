@@ -42,6 +42,7 @@ export default function VersionDetailView({
 }: Props) {
   const [version, setVersion] = useState<WorkflowVersion | null>(null);
   const [versionDescription, setVersionDescription] = useState("");
+  const [versionLabel, setVersionLabel] = useState("");
   const [revision, setRevision] = useState(1);
   const [selectedParamIds, setSelectedParamIds] = useState<number[]>([]);
   const [steps, setSteps] = useState<StepDraft[]>([{ ...emptyStep }]);
@@ -63,6 +64,7 @@ export default function VersionDetailView({
       );
       setVersion(res.data);
       setVersionDescription(res.data.description ?? "");
+      setVersionLabel(res.data.version_label ?? "");
       setRevision(res.data.revision);
       setSelectedParamIds(res.data.parameters.map((p) => p.id));
       setSteps(stepsFromVersion(res.data));
@@ -122,10 +124,12 @@ export default function VersionDetailView({
           parameter_ids: selectedParamIds,
           steps,
           description: versionDescription.trim() || null,
+          version_label: versionLabel.trim() || null,
           revision,
         },
       );
       setVersion(res.data);
+      setVersionLabel(res.data.version_label ?? "");
       setRevision(res.data.revision);
       onChanged();
     } catch (err) {
@@ -196,6 +200,7 @@ export default function VersionDetailView({
       // For better UX, surface a banner with a button that calls onChanged + navigates.
       setVersion(res.data);
       setVersionDescription(res.data.description ?? "");
+      setVersionLabel(res.data.version_label ?? "");
       setRevision(res.data.revision);
       setSelectedParamIds(res.data.parameters.map((p) => p.id));
       setSteps(stepsFromVersion(res.data));
@@ -217,7 +222,12 @@ export default function VersionDetailView({
             <IconBack /> Back to workflow
           </button>
           <h1>
-            v{version.version_number}{" "}
+            v{version.version_number}
+            {version.version_label && (
+              <span className="muted mono" style={{ marginLeft: "var(--space-2)", fontSize: "0.75em" }}>
+                {version.version_label}
+              </span>
+            )}
             <span className={versionStatusClass(version)} style={{ marginLeft: "var(--space-2)" }}>
               {versionStatusLabel(version)}
             </span>
@@ -289,6 +299,8 @@ export default function VersionDetailView({
         mode="edit"
         versionDescription={versionDescription}
         onVersionDescription={setVersionDescription}
+        versionLabel={versionLabel}
+        onVersionLabel={setVersionLabel}
         parameters={parameters}
         selectedParamIds={selectedParamIds}
         setSelectedParamIds={setSelectedParamIds}

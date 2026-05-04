@@ -24,6 +24,7 @@ export type WorkflowVersionSummary = {
   id: number;
   workflow_id: number;
   version_number: number;
+  version_label: string | null;
   status: VersionStatus;
   description: string | null;
   created_at: string;
@@ -35,6 +36,7 @@ export type WorkflowVersion = {
   id: number;
   workflow_id: number;
   version_number: number;
+  version_label: string | null;
   status: VersionStatus;
   description: string | null;
   revision: number;
@@ -65,6 +67,7 @@ export type WorkflowSummary = {
   latest_version_number: number | null;
   latest_published_version_id: number | null;
   latest_published_version_number: number | null;
+  latest_published_version_label: string | null;
 };
 
 export type Step = {

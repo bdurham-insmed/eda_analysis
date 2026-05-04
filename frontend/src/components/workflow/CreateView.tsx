@@ -25,6 +25,7 @@ export default function CreateView({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [versionDescription, setVersionDescription] = useState("");
+  const [versionLabel, setVersionLabel] = useState("");
   const [selectedParamIds, setSelectedParamIds] = useState<number[]>([]);
   const [error, setError] = useState("");
 
@@ -55,6 +56,7 @@ export default function CreateView({
           parameter_ids: selectedParamIds,
           steps,
           description: versionDescription.trim() || null,
+          version_label: versionLabel.trim() || null,
         },
         publish_initial_version: publish,
       });
@@ -114,6 +116,8 @@ export default function CreateView({
         mode="create"
         versionDescription={versionDescription}
         onVersionDescription={setVersionDescription}
+        versionLabel={versionLabel}
+        onVersionLabel={setVersionLabel}
         parameters={parameters}
         selectedParamIds={selectedParamIds}
         setSelectedParamIds={setSelectedParamIds}

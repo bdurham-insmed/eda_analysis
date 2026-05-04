@@ -53,9 +53,18 @@ export default function ListView({ workflows, error, onCreate, onOpen }: Props) 
                     <td>{wf.name}</td>
                     <td className="muted">{wf.description ?? "—"}</td>
                     <td className="mono">
-                      {wf.latest_published_version_number != null
-                        ? `v${wf.latest_published_version_number}`
-                        : <span className="muted">—</span>}
+                      {wf.latest_published_version_number != null ? (
+                        <>
+                          v{wf.latest_published_version_number}
+                          {wf.latest_published_version_label && (
+                            <span className="muted" style={{ marginLeft: 6 }}>
+                              {wf.latest_published_version_label}
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="muted">—</span>
+                      )}
                     </td>
                     <td className="mono muted">{wf.version_count}</td>
                     <td>
