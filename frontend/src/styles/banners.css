@@ -1,0 +1,21 @@
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  border: 1px solid transparent;
+}
+
+.banner-error {
+  background: var(--danger-50);
+  border-color: #fecaca;
+  color: var(--danger-700);
+}
+
+.banner-warning {
+  background: var(--warning-50);
+  border-color: #fde68a;
+  color: var(--warning-700);
+}
