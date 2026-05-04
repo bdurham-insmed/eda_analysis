@@ -37,7 +37,7 @@ export default function CreateView({
     onError: setError,
   });
 
-  const submit = async () => {
+  const submit = async (publish: boolean) => {
     setError("");
     if (!name.trim()) {
       setError("Name is required");
@@ -56,6 +56,7 @@ export default function CreateView({
           steps,
           description: versionDescription.trim() || null,
         },
+        publish_initial_version: publish,
       });
       onCreated();
     } catch (err) {
@@ -76,16 +77,25 @@ export default function CreateView({
             <IconBack /> Back to workflows
           </button>
           <h1>New workflow</h1>
-          <p>Creates a new workflow and a v1 draft to fill in.</p>
+          <p>Save as draft to keep iterating, or create &amp; publish to make v1 runnable immediately.</p>
         </div>
         <div className="workflow-form-actions">
           <button
             type="button"
-            className="btn btn-primary"
-            onClick={() => void submit()}
+            className="btn btn-secondary"
+            onClick={() => void submit(false)}
             disabled={!name.trim() || steps.some((s) => !s.step_name.trim())}
           >
-            Create workflow
+            Save as draft
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => void submit(true)}
+            disabled={!name.trim() || steps.some((s) => !s.step_name.trim())}
+            title="Create the workflow and publish v1 immediately"
+          >
+            Create &amp; publish
           </button>
         </div>
       </div>
