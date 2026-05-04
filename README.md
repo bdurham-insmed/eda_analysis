@@ -81,10 +81,11 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
    docker compose down -v
    ```
 
-## Schema upgrade
+## Fresh rebuild
 
-This project is in dev phase — there is one version. Schema changes are appended idempotently to `db_init/init.sql`, and Postgres only runs `init.sql` against an empty data directory, so applying a change requires:
-
+As this code is for demonstration only.
+Schema changes are not handled via migrations.
+For a fresh build run the following command:
 ```
 docker compose down -v && docker compose up -d --build
 ```
