@@ -80,6 +80,34 @@ class WorkflowVersionContentIn(BaseModel):
         return self
 
 
+class WorkflowVersionUpdateIn(WorkflowVersionContentIn):
+    """
+    Update payload for a draft version with optimistic-lock token.
+    """
+
+    revision: int
+
+
+class WorkflowVersionCreateIn(BaseModel):
+    """
+    Create a new draft version on an existing workflow.
+
+    If from_version_id is provided, parameters/steps/description default to that version.
+    Otherwise the request must supply parameters and steps explicitly via `content`.
+    """
+
+    from_version_id: int | None = None
+    content: WorkflowVersionContentIn | None = None
+
+    @model_validator(mode="after")
+    def _validate_source(self) -> "WorkflowVersionCreateIn":
+        if self.from_version_id is None and self.content is None:
+            raise ValueError(
+                "either from_version_id or content must be provided",
+            )
+        return self
+
+
 class WorkflowVersionSummary(BaseModel):
     """
     Lightweight version summary for the workflow detail view.
@@ -93,6 +121,24 @@ class WorkflowVersionSummary(BaseModel):
     created_at: datetime
     published_at: datetime | None
     archived_at: datetime | None
+
+
+class WorkflowVersionOut(BaseModel):
+    """
+    Full version detail.
+    """
+
+    id: int
+    workflow_id: int
+    version_number: int
+    status: VersionStatusLiteral
+    description: str | None
+    revision: int
+    created_at: datetime
+    published_at: datetime | None
+    archived_at: datetime | None
+    parameters: list[ParameterOut]
+    steps: list[WorkflowStepOut]
 
 
 class WorkflowIn(BaseModel):
