@@ -13,7 +13,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from routes.broadcast import router as broadcast_router
+from routes.parameters import router as parameters_router
 from routes.pipelines import router as pipelines_router
+from routes.workflows import router as workflows_router
 
 load_dotenv()
 
@@ -40,4 +42,6 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 app.include_router(pipelines_router)
+app.include_router(workflows_router)
+app.include_router(parameters_router)
 app.include_router(broadcast_router)
