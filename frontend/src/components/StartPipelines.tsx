@@ -101,7 +101,8 @@ export default function StartPipelines({
   const [selectedVersionId, setSelectedVersionId] = useState<number | null>(null);
   const [versionDetail, setVersionDetail] = useState<WorkflowVersion | null>(null);
   const [formData, setFormData] = useState<FormState>({});
-  const [count, setCount] = useState<number>(1);
+  const [countInput, setCountInput] = useState<string>("1");
+  const parsedCount = Math.max(1, Math.min(2500, Math.floor(Number(countInput) || 1)));
   const [archivedNames, setArchivedNames] = useState<Set<string>>(new Set());
   const [paramErrors, setParamErrors] = useState<Record<string, string>>({});
 
@@ -280,14 +281,14 @@ export default function StartPipelines({
       await axios.post(`${INITIATOR_BASE}/jobs`, {
         workflow_version_id: versionDetail.id,
         parameters,
-        count,
+        count: parsedCount,
       });
       setSelectedWorkflowId(null);
       setWorkflowDetail(null);
       setSelectedVersionId(null);
       setVersionDetail(null);
       setFormData({});
-      setCount(1);
+      setCountInput("1");
     } catch (err) {
       const body = errorBody(err);
       const code = body.error;
@@ -527,15 +528,9 @@ export default function StartPipelines({
                         type="number"
                         min={1}
                         max={2500}
-                        value={count}
-                        onChange={(e) => {
-                          const n = Number(e.target.value);
-                          if (Number.isNaN(n)) {
-                            setCount(1);
-                          } else {
-                            setCount(Math.max(1, Math.min(2500, Math.floor(n))));
-                          }
-                        }}
+                        value={countInput}
+                        onChange={(e) => setCountInput(e.target.value)}
+                        onBlur={() => setCountInput(String(parsedCount))}
                         disabled={loading}
                       />
                       <span className="muted" style={{ fontSize: "var(--fs-xs)" }}>
@@ -555,8 +550,8 @@ export default function StartPipelines({
                     >
                       {loading
                         ? "Starting…"
-                        : count > 1
-                          ? `Start ${count} pipelines`
+                        : parsedCount > 1
+                          ? `Start ${parsedCount} pipelines`
                           : "Start pipeline"}
                     </button>
                   </div>
