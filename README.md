@@ -81,6 +81,14 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
    docker compose down -v
    ```
 
+## Schema upgrade
+
+This project is in dev phase — there is one version. Schema changes are appended idempotently to `db_init/init.sql`, and Postgres only runs `init.sql` against an empty data directory, so applying a change requires:
+
+```
+docker compose down -v && docker compose up -d --build
+```
+
 ## WebSocket Integration
 
 The API server receives real-time pipeline state and event updates from the `state_tracker` service, which pushes updates to a dedicated API endpoint. The API server then broadcasts these updates to the frontend via WebSocket, enabling live monitoring of pipeline progress.
