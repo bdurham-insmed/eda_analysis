@@ -172,6 +172,17 @@ export default function VersionDetailView({
     }
   };
 
+  const deleteDraft = async () => {
+    if (!confirm("Delete this draft permanently? This cannot be undone.")) return;
+    try {
+      await axios.delete(`${API_BASE}/workflow-versions/${versionId}`);
+      onChanged();
+      onBack();
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  };
+
   const cloneAsNewDraft = async () => {
     setError("");
     try {
@@ -219,6 +230,11 @@ export default function VersionDetailView({
           </p>
         </div>
         <div className="workflow-form-actions">
+          {isDraft && !isArchived && (
+            <button type="button" className="btn btn-danger" onClick={() => void deleteDraft()}>
+              Delete
+            </button>
+          )}
           {isArchived && (
             <button type="button" className="btn btn-secondary" onClick={() => void unarchive()}>
               Unarchive

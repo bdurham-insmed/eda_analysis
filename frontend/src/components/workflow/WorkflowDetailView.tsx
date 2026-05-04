@@ -134,6 +134,18 @@ export default function WorkflowDetailView({
     }
   };
 
+  const deleteDraft = async (vId: number, vNumber: number) => {
+    if (!confirm(`Delete draft v${vNumber} permanently? This cannot be undone.`)) return;
+    setError("");
+    try {
+      await axios.delete(`${API_BASE}/workflow-versions/${vId}`);
+      await load();
+      onChanged();
+    } catch (err) {
+      setError(errorMessage(err));
+    }
+  };
+
   return (
     <>
       <div className="page-header">
@@ -256,6 +268,17 @@ export default function WorkflowDetailView({
                         >
                           Clone
                         </button>
+                        {v.status === "draft" && (
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => void deleteDraft(v.id, v.version_number)}
+                            style={{ color: "var(--danger-600)" }}
+                            title="Delete this draft permanently"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
