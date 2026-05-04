@@ -14,6 +14,7 @@ COPY uv.lock ./
 COPY services/pipeline_initiator/pyproject.toml ./
 
 COPY services/pipeline_initiator/main.py .
+COPY services/pipeline_initiator/upload_file_handler ./upload_file_handler
 
 
 RUN uv lock && uv sync --frozen
