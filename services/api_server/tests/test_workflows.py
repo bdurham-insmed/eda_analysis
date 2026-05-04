@@ -48,6 +48,31 @@ def test_create_workflow_creates_v1_draft(client):
     assert len(detail["steps"]) == 2
 
 
+def test_create_workflow_publish_initial_version(client):
+    """
+    POST /workflows with publish_initial_version=true publishes v1 in the same transaction.
+    """
+    body = {
+        "name": "instant-publish",
+        "description": None,
+        "initial_version": {
+            "parameter_ids": [],
+            "steps": [
+                {"step_order": 0, "step_name": "go", "step_type": "processing"},
+            ],
+            "description": "shipped on day one",
+        },
+        "publish_initial_version": True,
+    }
+    res = client.post("/workflows", json=body)
+    assert res.status_code == 201, res.text
+    wf = res.json()
+    assert len(wf["versions"]) == 1
+    v1 = wf["versions"][0]
+    assert v1["status"] == "published"
+    assert v1["published_at"] is not None
+
+
 def test_duplicate_name_returns_409(client):
     """
     Creating two workflows with the same name returns a 409 with `duplicate_name`.

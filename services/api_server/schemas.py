@@ -144,11 +144,15 @@ class WorkflowVersionOut(BaseModel):
 class WorkflowIn(BaseModel):
     """
     Input model for creating a workflow. Supplies metadata plus the contents of v1.
+
+    If `publish_initial_version` is true, v1 is published immediately rather than
+    left as a draft — useful when the user wants their first version live in one click.
     """
 
     name: str = Field(min_length=1, max_length=255)
     description: str | None = None
     initial_version: WorkflowVersionContentIn
+    publish_initial_version: bool = False
 
 
 class WorkflowMetadataUpdateIn(BaseModel):

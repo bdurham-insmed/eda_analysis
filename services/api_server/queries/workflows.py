@@ -5,6 +5,7 @@ Workflow CRUD: metadata + archive flag. Version contents live in queries.version
 from queries.shared import StaleRevisionError
 from queries.shared import validate_parameter_ids
 from queries.versions import create_version
+from queries.versions import publish_version
 from schemas import WorkflowIn
 from schemas import WorkflowMetadataUpdateIn
 from sqlalchemy import text
@@ -109,8 +110,9 @@ def get_workflow(conn: Connection, workflow_id: int) -> dict | None:
 
 def create_workflow(conn: Connection, payload: WorkflowIn) -> int:
     """
-    Insert a workflow + a v1 draft version with the supplied content.
-    Returns the new workflow id.
+    Insert a workflow + a v1 version with the supplied content. If
+    `publish_initial_version` is true on the payload, v1 is published in the same
+    transaction. Returns the new workflow id.
     """
     validate_parameter_ids(conn, payload.initial_version.parameter_ids)
     wf_id = conn.execute(
@@ -121,12 +123,14 @@ def create_workflow(conn: Connection, payload: WorkflowIn) -> int:
         """),
         {"name": payload.name, "description": payload.description},
     ).scalar_one()
-    create_version(
+    version_id = create_version(
         conn,
         workflow_id=wf_id,
         version_number=1,
         content=payload.initial_version,
     )
+    if payload.publish_initial_version:
+        publish_version(conn, version_id)
     return wf_id
 
 
