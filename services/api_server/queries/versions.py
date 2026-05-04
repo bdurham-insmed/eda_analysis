@@ -344,3 +344,25 @@ def unarchive_version(conn: Connection, version_id: int) -> bool:
         ).fetchone()
         return exists is not None
     return True
+
+
+def delete_version(conn: Connection, version_id: int) -> bool:
+    """
+    Hard-delete a draft version. Returns True if deleted, False if it doesn't exist.
+    Raises ValueError("version_not_draft") if status is not 'draft'.
+    Pipelines never reference drafts (only published versions are runnable), so
+    the cascade on workflow_version_parameters / workflow_version_steps is safe.
+    """
+    row = conn.execute(
+        text("SELECT status FROM workflow_versions WHERE id = :id"),
+        {"id": version_id},
+    ).fetchone()
+    if row is None:
+        return False
+    if row[0] != "draft":
+        raise ValueError("version_not_draft")
+    conn.execute(
+        text("DELETE FROM workflow_versions WHERE id = :id"),
+        {"id": version_id},
+    )
+    return True

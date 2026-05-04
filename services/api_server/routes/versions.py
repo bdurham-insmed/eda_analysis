@@ -117,3 +117,16 @@ def unarchive_workflow_version(version_id: int) -> Response:
     if not exists:
         raise HTTPException(status_code=404, detail={"error": "version_not_found"})
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.delete("/workflow-versions/{version_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_workflow_version(version_id: int) -> Response:
+    """Hard-delete a draft version. Refuses if the version is published."""
+    try:
+        with engine.begin() as connection:
+            existed = queries.delete_version(connection, version_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail={"error": str(exc)})
+    if not existed:
+        raise HTTPException(status_code=404, detail={"error": "version_not_found"})
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

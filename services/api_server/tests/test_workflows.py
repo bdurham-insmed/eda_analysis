@@ -120,6 +120,36 @@ def test_get_unknown_workflow_returns_404(client):
     assert res.status_code == 404
 
 
+def test_delete_draft_version(client):
+    """
+    DELETE on a draft version removes it; DELETE on a published version returns 409.
+    """
+    create = _make_workflow(client, name="deletable")
+    wf = create.json()
+    v1_id = wf["versions"][0]["id"]
+
+    # delete the draft v1
+    res = client.delete(f"/workflow-versions/{v1_id}")
+    assert res.status_code == 204
+    assert client.get(f"/workflow-versions/{v1_id}").status_code == 404
+
+    # create a new draft, publish it, then deletion should be refused
+    new_v = client.post(
+        f"/workflows/{wf['id']}/versions",
+        json={
+            "content": {
+                "parameter_ids": [],
+                "steps": [{"step_order": 0, "step_name": "x", "step_type": "processing"}],
+                "description": None,
+            },
+        },
+    ).json()
+    client.post(f"/workflow-versions/{new_v['id']}/publish")
+    refused = client.delete(f"/workflow-versions/{new_v['id']}")
+    assert refused.status_code == 409
+    assert refused.json()["detail"]["error"] == "version_not_draft"
+
+
 def test_version_lifecycle(client):
     """
     Draft -> publish -> clone -> archive cycle.

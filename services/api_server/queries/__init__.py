@@ -21,6 +21,7 @@ from queries.shared import StaleRevisionError
 from queries.versions import archive_version
 from queries.versions import clone_version
 from queries.versions import create_version_from_content
+from queries.versions import delete_version
 from queries.versions import get_workflow_version
 from queries.versions import publish_version
 from queries.versions import unarchive_version
@@ -41,6 +42,7 @@ __all__ = [
     "create_version_from_content",
     "create_workflow",
     "create_workflow_parameter",
+    "delete_version",
     "get_pipeline",
     "get_workflow",
     "get_workflow_parameter",
