@@ -9,7 +9,9 @@ dependencies = [
     "sqlalchemy>=2.0.0",
     "psycopg2-binary>=2.9.11",
     "python-dotenv>=1.0.0",
-    "confluent-kafka>=2.12.2"
+    "confluent-kafka>=2.12.2",
+    "google-cloud-storage>=2.18.0",
+    "python-multipart>=0.0.20"
 ]
 
 [build-system]

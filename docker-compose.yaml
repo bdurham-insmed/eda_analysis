@@ -87,9 +87,9 @@ services:
       - ./db_init/init.sql:/docker-entrypoint-initdb.d/init_db.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   api:
     build:
@@ -151,6 +151,16 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db/postgres
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - GCS_BUCKET=${GCS_BUCKET:-}
+      - GOOGLE_APPLICATION_CREDENTIALS=/secrets/gcs.json
+      - MAX_UPLOAD_BYTES=${MAX_UPLOAD_BYTES:-5368709120}
+    volumes:
+      - ${GCS_CREDENTIALS_PATH:-/dev/null}:/secrets/gcs.json:ro
 
   frontend:
     build: ./frontend

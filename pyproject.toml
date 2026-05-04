@@ -12,8 +12,18 @@ members = [
 [tool.uv]
 dev-dependencies = [
     "pytest>=8.0.0",
+    "pytest-asyncio>=0.24.0",
     "httpx>=0.27.0",
     "pre-commit>=4.5.1",
+    "testcontainers[postgres]>=4.8.0",
+    "google-cloud-storage>=2.18.0",
+    "python-multipart>=0.0.20",
+    "fastapi>=0.124.4",
+    "sqlalchemy>=2.0.0",
+    "psycopg2-binary>=2.9.11",
+    "pydantic>=2.0",
+    "confluent-kafka>=2.12.2",
+    "python-dotenv>=1.0.0",
 ]
 
 [tool.ruff]
@@ -27,6 +37,9 @@ lint.select = [
     "COM",  # pyflakes trailing comma
     "UP",  # pyupgrade
     "D10",  # docstring presence
+    "D101", # class docstrings
+    "D102", # class/method docstrings
+    "D103", # missing public-function
     "D419",  # empty docstring
     "T100",  # debugger used
 ]
