@@ -83,8 +83,7 @@ This repository demonstrates an Event Driven Architecture (EDA) using Apache Kaf
 
 ## Fresh rebuild
 
-As this code is for demonstration only.
-Schema changes are not handled via migrations.
+As this code is for demonstration only. Schema changes are not handled via migrations.
 For a fresh build run the following command:
 ```
 docker compose down -v && docker compose up -d --build
