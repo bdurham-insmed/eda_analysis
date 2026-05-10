@@ -2,6 +2,7 @@
   display: grid;
   grid-template-columns: var(--sidebar-width) 1fr;
   min-height: 100vh;
+  background: var(--bg-page);
 }
 
 .page {
@@ -21,6 +22,7 @@
 .page-header h1 {
   font-size: var(--fs-2xl);
   font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .page-header p {
@@ -43,6 +45,7 @@
 .page-section-header h2 {
   font-size: var(--fs-lg);
   font-weight: 600;
+  letter-spacing: -0.005em;
 }
 
 @media (max-width: 900px) {
@@ -53,7 +56,7 @@
     position: static;
     height: auto;
     border-right: none;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--rule);
   }
   .page {
     padding: var(--space-4);

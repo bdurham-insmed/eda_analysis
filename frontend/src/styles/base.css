@@ -8,11 +8,13 @@ body {
   padding: 0;
   font-family: var(--font-sans);
   font-size: var(--fs-base);
+  font-feature-settings: "cv11", "ss01";
   color: var(--text-primary);
   background: var(--bg-page);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
+  transition: background-color var(--transition), color var(--transition);
 }
 
 #root {
@@ -31,6 +33,7 @@ h4 {
 
 h1 {
   font-size: var(--fs-2xl);
+  letter-spacing: -0.02em;
 }
 h2 {
   font-size: var(--fs-xl);
@@ -48,16 +51,37 @@ p {
 }
 
 a {
-  color: var(--accent-600);
+  color: var(--text-link);
   text-decoration: none;
 }
 
-code {
+a:hover {
+  text-decoration: underline;
+}
+
+code,
+.mono,
+.tabular {
   font-family: var(--font-mono);
+  font-feature-settings: "tnum" 1, "zero" 1;
+}
+
+code {
   font-size: 0.85em;
   background: var(--bg-subtle);
+  border: 1px solid var(--border);
   padding: 1px 6px;
   border-radius: var(--radius-sm);
+  color: var(--text-primary);
+}
+
+::selection {
+  background: var(--accent-100);
+  color: var(--accent-700);
+}
+
+[data-theme="dark"] ::selection {
+  background: var(--accent-200);
   color: var(--text-primary);
 }
 

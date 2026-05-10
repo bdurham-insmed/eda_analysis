@@ -23,6 +23,15 @@
   color: var(--accent-700);
 }
 
+.status-running::before {
+  animation: status-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
 .status-completed {
   background: var(--success-50);
   color: var(--success-700);

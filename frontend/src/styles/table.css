@@ -6,11 +6,12 @@
   width: 100%;
   border-collapse: collapse;
   font-size: var(--fs-base);
+  font-variant-numeric: tabular-nums;
 }
 
 .table thead th {
   background: var(--bg-subtle);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
   text-align: left;
   padding: var(--space-3) var(--space-4);
   font-size: var(--fs-xs);
@@ -18,17 +19,22 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-tertiary);
+  white-space: nowrap;
 }
 
 .table tbody td {
   padding: var(--space-3) var(--space-4);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--rule);
   color: var(--text-primary);
   vertical-align: middle;
 }
 
 .table tbody tr:last-child td {
   border-bottom: none;
+}
+
+.table tbody tr {
+  transition: background var(--transition);
 }
 
 .table tbody tr:hover {

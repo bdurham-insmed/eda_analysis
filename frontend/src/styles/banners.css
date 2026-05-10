@@ -10,12 +10,12 @@
 
 .banner-error {
   background: var(--danger-50);
-  border-color: #fecaca;
+  border-color: var(--danger-100);
   color: var(--danger-700);
 }
 
 .banner-warning {
   background: var(--warning-50);
-  border-color: #fde68a;
+  border-color: var(--warning-100);
   color: var(--warning-700);
 }

@@ -12,8 +12,11 @@
   font-weight: 500;
   line-height: 1;
   cursor: pointer;
-  transition: background var(--transition), border-color var(--transition),
-    color var(--transition), box-shadow var(--transition);
+  transition:
+    background var(--transition),
+    border-color var(--transition),
+    color var(--transition),
+    box-shadow var(--transition);
   white-space: nowrap;
 }
 
@@ -34,6 +37,11 @@
   border-color: var(--accent-700);
 }
 
+.btn-primary:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 .btn-secondary {
   background: var(--bg-surface);
   color: var(--text-primary);
@@ -43,7 +51,7 @@
 
 .btn-secondary:hover:not(:disabled) {
   background: var(--bg-subtle);
-  border-color: var(--slate-400);
+  border-color: var(--gray-400);
 }
 
 .btn-ghost {
@@ -65,7 +73,7 @@
 
 .btn-danger:hover:not(:disabled) {
   background: var(--danger-500);
-  color: var(--text-on-accent);
+  color: #ffffff;
   border-color: var(--danger-500);
 }
 
