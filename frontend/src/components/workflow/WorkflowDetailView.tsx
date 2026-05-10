@@ -6,6 +6,7 @@ import MetadataCard from "./MetadataCard.tsx";
 import { errorMessage } from "./errors.ts";
 import { IconBack, IconPlus } from "./icons.tsx";
 import { versionStatusClass, versionStatusLabel } from "./types.ts";
+import { formatDateTime } from "../../utils/datetime.ts";
 
 type Props = {
   workflowId: number;
@@ -235,7 +236,7 @@ export default function WorkflowDetailView({
                 </thead>
                 <tbody>
                   {workflow.versions.map((v) => (
-                    <tr key={v.id}>
+                    <tr key={v.id} onClick={() => onOpenVersion(v.id)} style={{ cursor: "pointer" }}>
                       <td className="mono">
                         v{v.version_number}
                         {v.version_label && (
@@ -250,12 +251,10 @@ export default function WorkflowDetailView({
                         </span>
                       </td>
                       <td className="muted">
-                        {new Date(v.created_at).toLocaleString()}
+                        {formatDateTime(v.created_at)}
                       </td>
                       <td className="muted">
-                        {v.published_at
-                          ? new Date(v.published_at).toLocaleString()
-                          : "—"}
+                        {formatDateTime(v.published_at)}
                       </td>
                       <td className="muted">{v.description ?? "—"}</td>
                       <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>

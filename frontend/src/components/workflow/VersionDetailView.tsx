@@ -5,6 +5,7 @@ import type { Parameter, WorkflowStep, WorkflowVersion } from "../../types.ts";
 import VersionContentEditor from "./VersionContentEditor.tsx";
 import { errorMessage } from "./errors.ts";
 import { IconBack } from "./icons.tsx";
+import { formatDateTime } from "../../utils/datetime.ts";
 import {
   type StepDraft,
   emptyStep,
@@ -233,9 +234,9 @@ export default function VersionDetailView({
             </span>
           </h1>
           <p>
-            Created {new Date(version.created_at).toLocaleString()}
+            Created {formatDateTime(version.created_at)}
             {version.published_at && (
-              <>{" · "}Published {new Date(version.published_at).toLocaleString()}</>
+              <>{" · "}Published {formatDateTime(version.published_at)}</>
             )}
           </p>
         </div>
