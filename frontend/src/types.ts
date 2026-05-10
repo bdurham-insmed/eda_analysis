@@ -70,9 +70,16 @@ export type WorkflowSummary = {
   latest_published_version_label: string | null;
 };
 
+export type PipelineStatus =
+  | "RUNNING"
+  | "COMPLETED"
+  | "FAILED"
+  | "PENDING"
+  | "ARCHIVED";
+
 export type Step = {
   name: string;
-  status: string;
+  status: PipelineStatus;
   start_time: string | null;
   end_time: string | null;
   step_order?: number | null;
@@ -82,7 +89,7 @@ export type Step = {
 export type Pipeline = {
   id: string;
   name: string;
-  status: string;
+  status: PipelineStatus;
   start_time: string | null;
   end_time: string | null;
   workflow_id?: number | null;
@@ -95,7 +102,7 @@ export type Pipeline = {
 export type WebSocketUpdate = {
   pipeline_id: string;
   name: string;
-  status: string;
+  status: PipelineStatus;
   event_type: string;
   step_name?: string;
   timestamp: number;
