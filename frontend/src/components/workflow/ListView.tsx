@@ -48,7 +48,7 @@ export default function ListView({ workflows, error, onCreate, onOpen }: Props) 
               </thead>
               <tbody>
                 {workflows.map((wf) => (
-                  <tr key={wf.id}>
+                  <tr key={wf.id} onClick={() => onOpen(wf.id)} style={{ cursor: "pointer" }}>
                     <td className="mono muted">{wf.id}</td>
                     <td>{wf.name}</td>
                     <td className="muted">{wf.description ?? "—"}</td>
