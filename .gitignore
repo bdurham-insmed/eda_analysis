@@ -33,6 +33,9 @@ services/**/target/
 **/*.rs.bk
 Cargo.lock
 
+# NPM
+package-lock.json
+
 # macOS
 .DS_Store
 
