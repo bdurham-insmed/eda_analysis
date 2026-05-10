@@ -19,3 +19,19 @@
   border-color: var(--warning-100);
   color: var(--warning-700);
 }
+
+.banner {
+  justify-content: space-between;
+}
+
+.banner-action {
+  margin-left: var(--space-3);
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.banner-action:hover {
+  text-decoration: underline;
+}

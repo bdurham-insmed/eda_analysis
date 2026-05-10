@@ -1,7 +1,7 @@
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.4);
+  background: var(--bg-overlay);
   backdrop-filter: blur(2px);
   display: flex;
   align-items: stretch;
@@ -206,4 +206,78 @@
 .step-meta {
   font-size: var(--fs-xs);
   color: var(--text-tertiary);
+}
+
+/* Segmented step progress bar */
+.step-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.step-progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--fs-xs);
+}
+
+.step-progress-count {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.step-progress-state {
+  color: var(--text-tertiary);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 0.6875rem;
+}
+
+.step-progress-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 3px;
+  height: 6px;
+  background: var(--bg-subtle);
+  border-radius: 999px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.step-progress-segment {
+  height: 100%;
+  background: var(--gray-200);
+  border-radius: 2px;
+  transition: background var(--transition);
+}
+
+.step-progress-segment--completed {
+  background: var(--success-500);
+}
+
+.step-progress-segment--running {
+  background: var(--accent-500);
+  animation: progress-pulse 1.6s ease-in-out infinite;
+}
+
+.step-progress-segment--failed {
+  background: var(--danger-500);
+}
+
+.step-progress-segment--pending {
+  background: var(--gray-200);
+}
+
+[data-theme="dark"] .step-progress-segment--pending {
+  background: var(--gray-300);
+}
+
+@keyframes progress-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
 }

@@ -19,3 +19,8 @@
   color: var(--text-secondary);
   font-weight: 500;
 }
+
+.empty-state .btn {
+  margin-top: var(--space-2);
+  text-decoration: none;
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import axios from "axios";
 import "./index.css";
 import StartPipelines from "./components/StartPipelines.tsx";
@@ -8,23 +8,27 @@ import WorkflowForm from "./components/workflow/WorkflowForm.tsx";
 import { API_BASE, WS_URL } from "./constants.ts";
 import FilterPipelinesSection from "./components/FilterPipelinesSection.tsx";
 import Header from "./components/Header.tsx";
+import ToastStack from "./components/ToastStack.tsx";
+import type { Toast } from "./components/ToastStack.tsx";
 import type {
   Pipeline,
+  PipelineStatus,
   WorkflowSummary,
   WebSocketUpdate,
 } from "./types.ts";
+import { parseHash, buildHash, type Route } from "./routes.ts";
+import { parseIso, isRecent } from "./utils/datetime.ts";
+import { useNowTicker } from "./hooks/useNowTicker.ts";
 
 const filterPipelines = (
   pipelines: Pipeline[],
   displayedStatus: string,
   search: string | number | undefined,
+  now: number,
 ): Pipeline[] => {
   let filtered = pipelines;
   if (displayedStatus === "RECENT") {
-    filtered = filtered.filter((p) => {
-      const start = p.start_time ? new Date(p.start_time).getTime() : 0;
-      return Date.now() - start <= 10 * 60 * 1000;
-    });
+    filtered = filtered.filter((p) => isRecent(p.start_time, now));
   } else if (displayedStatus !== "TOTAL") {
     filtered = filtered.filter((p) => p.status === displayedStatus);
   }
@@ -41,8 +45,8 @@ const filterPipelines = (
 
 const sortPipelines = (pipelines: Pipeline[]): Pipeline[] =>
   [...pipelines].sort((a, b) => {
-    const aTime = a.start_time ? new Date(a.start_time).getTime() : 0;
-    const bTime = b.start_time ? new Date(b.start_time).getTime() : 0;
+    const aTime = a.start_time ? parseIso(a.start_time).getTime() : 0;
+    const bTime = b.start_time ? parseIso(b.start_time).getTime() : 0;
     return bTime - aTime;
   });
 
@@ -86,7 +90,8 @@ const IconLogo = () => (
 );
 
 function App() {
-  const [view, setView] = useState<View>("dashboard");
+  const [route, setRoute] = useState<Route>(() => parseHash(window.location.hash));
+  const view: View = route.view;
   const [pipelines, setPipelines] = useState<Pipeline[]>([]);
   const [displayedStatus, setDisplayedStatus] = useState<string>("TOTAL");
   const [workflows, setWorkflows] = useState<WorkflowSummary[]>([]);
@@ -98,8 +103,53 @@ function App() {
   const [error, setError] = useState("");
   const [wsConnected, setWsConnected] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [initialLoad, setInitialLoad] = useState(true);
+  const [toasts, setToasts] = useState<Toast[]>([]);
   const selectedPipelineRef = useRef<Pipeline | null>(selectedPipeline);
+  const seenStatusRef = useRef<Map<string, PipelineStatus>>(new Map());
+  const toastTimersRef = useRef<Map<number, number>>(new Map());
   const pageSize: number = 25;
+
+  const setView = useCallback((next: View) => {
+    setRoute(next === "manage"
+      ? { view: "manage" }
+      : { view: "dashboard", pipelineId: null });
+  }, []);
+
+  const dismissToast = useCallback((id: number) => {
+    const t = toastTimersRef.current.get(id);
+    if (t !== undefined) {
+      clearTimeout(t);
+      toastTimersRef.current.delete(id);
+    }
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const pushToast = useCallback((toast: Omit<Toast, "id">) => {
+    const id = Date.now() + Math.random();
+    setToasts((prev) => {
+      const next = [...prev, { ...toast, id }];
+      while (next.length > 4) {
+        const dropped = next.shift()!;
+        const t = toastTimersRef.current.get(dropped.id);
+        if (t !== undefined) {
+          clearTimeout(t);
+          toastTimersRef.current.delete(dropped.id);
+        }
+      }
+      return next;
+    });
+    const handle = window.setTimeout(() => dismissToast(id), 6000);
+    toastTimersRef.current.set(id, handle);
+  }, [dismissToast]);
+
+  useEffect(() => {
+    const timers = toastTimersRef.current;
+    return () => {
+      for (const handle of timers.values()) clearTimeout(handle);
+      timers.clear();
+    };
+  }, []);
 
   const refreshWorkflows = async () => {
     try {
@@ -119,12 +169,33 @@ function App() {
         ]);
         setPipelines(pipelinesRes.data);
         setWorkflows(workflowsRes.data);
+        const seen = seenStatusRef.current;
+        for (const p of pipelinesRes.data) {
+          seen.set(p.id, p.status);
+        }
       } catch {
         setError("Failed to connect to backend");
+      } finally {
+        setInitialLoad(false);
       }
     };
     void fetchInitialData();
   }, []);
+
+  useEffect(() => {
+    const onHashChange = () => setRoute(parseHash(window.location.hash));
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  // replaceState (not assignment) so the back button traverses real history
+  // entries rather than a chain of hash-only mutations.
+  useEffect(() => {
+    const target = buildHash(route);
+    if (window.location.hash !== target) {
+      window.history.replaceState(null, "", target);
+    }
+  }, [route]);
 
   useEffect(() => {
     setCurrentPage(1);
@@ -155,11 +226,25 @@ function App() {
       socket.onmessage = (event) => {
         const update: WebSocketUpdate = JSON.parse(event.data);
         const mstimestamp = update.timestamp * 1000;
-        setPipelines((prevPipelines) => {
-          const found = prevPipelines.some((p) => p.id === update.pipeline_id);
-          if (!found) {
+        const prevStatus = seenStatusRef.current.get(update.pipeline_id);
+        if (update.status === "FAILED" && prevStatus !== "FAILED") {
+          pushToast({
+            kind: "error",
+            title: "Pipeline failed",
+            message: update.name,
+            pipelineId: update.pipeline_id,
+          });
+        }
+        seenStatusRef.current.set(update.pipeline_id, update.status);
+        const newEndTime =
+          update.status === "COMPLETED" || update.status === "FAILED"
+            ? new Date(mstimestamp).toISOString()
+            : null;
+        setPipelines((prev) => {
+          const idx = prev.findIndex((p) => p.id === update.pipeline_id);
+          if (idx === -1) {
             return [
-              ...prevPipelines,
+              ...prev,
               {
                 id: update.pipeline_id,
                 name: update.name,
@@ -170,24 +255,27 @@ function App() {
               },
             ];
           }
-          return prevPipelines.map((p) =>
-            p.id === update.pipeline_id
-              ? {
-                  ...p,
-                  name: update.name,
-                  status: update.status,
-                  end_time:
-                    update.status === "COMPLETED" || update.status === "FAILED"
-                      ? new Date(mstimestamp).toISOString()
-                      : null,
-                }
-              : p,
-          );
+          const cur = prev[idx];
+          if (
+            cur.name === update.name &&
+            cur.status === update.status &&
+            cur.end_time === newEndTime
+          ) {
+            return prev;
+          }
+          const next = prev.slice();
+          next[idx] = {
+            ...cur,
+            name: update.name,
+            status: update.status,
+            end_time: newEndTime,
+          };
+          return next;
         });
         if (selectedPipelineRef.current?.id === update.pipeline_id) {
-          fetchPipelineDetails(update.pipeline_id)
-            .then()
-            .catch((err) => console.error(err));
+          fetchPipelineDetails(update.pipeline_id).catch((err) =>
+            console.error(err),
+          );
         }
       };
       socket.onerror = (err) => console.error("WebSocket error", err);
@@ -204,7 +292,7 @@ function App() {
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
       if (socket) socket.close();
     };
-  }, []);
+  }, [pushToast]);
 
   const fetchPipelineDetails = async (id: string) => {
     try {
@@ -215,6 +303,27 @@ function App() {
     }
   };
 
+  const openPipeline = useCallback((id: string) => {
+    setRoute({ view: "dashboard", pipelineId: id });
+  }, []);
+
+  const closePipeline = useCallback(() => {
+    setRoute((r) =>
+      r.view === "dashboard" ? { view: "dashboard", pipelineId: null } : r,
+    );
+  }, []);
+
+  // Route is the source of truth; selectedPipeline is the fetched payload cache.
+  useEffect(() => {
+    if (route.view !== "dashboard") return;
+    if (!route.pipelineId) {
+      if (selectedPipeline) setSelectedPipeline(null);
+      return;
+    }
+    if (selectedPipeline?.id === route.pipelineId) return;
+    void fetchPipelineDetails(route.pipelineId);
+  }, [route, selectedPipeline]);
+
   const handleParamChange = (name: string, value: unknown) => {
     setFormData((prev) => ({ ...prev, [name]: value as string | number }));
   };
@@ -224,9 +333,13 @@ function App() {
     setCurrentPage(1);
   };
 
+  // 30-second tick so the RECENT bucket re-evaluates while the user lingers.
+  const recentTick = useNowTicker(displayedStatus === "RECENT", 30000);
   const filteredPipelines = useMemo(
-    () => filterPipelines(pipelines, displayedStatus, formData.search),
-    [pipelines, displayedStatus, formData.search],
+    () => filterPipelines(pipelines, displayedStatus, formData.search, Date.now()),
+    // recentTick drives freshness for the RECENT bucket only.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [pipelines, displayedStatus, formData.search, recentTick],
   );
 
   const paginatedPipelines = useMemo(
@@ -299,6 +412,7 @@ function App() {
                 displayedStatus={displayedStatus}
                 handleParamChange={handleParamChange}
                 handleFilter={handleFilter}
+                initialLoad={initialLoad}
               />
               <PipelineDashboard
                 pipelines={filteredPipelines}
@@ -306,12 +420,14 @@ function App() {
                 currentPage={currentPage}
                 pageSize={pageSize}
                 setCurrentPage={setCurrentPage}
-                onSelectPipeline={(id) => void fetchPipelineDetails(id)}
+                onSelectPipeline={openPipeline}
+                initialLoad={initialLoad}
+                disableKeyboardNav={selectedPipeline !== null}
               />
               {selectedPipeline && (
                 <PipelineDetailsModal
                   pipeline={selectedPipeline}
-                  onClose={() => setSelectedPipeline(null)}
+                  onClose={closePipeline}
                 />
               )}
             </>
@@ -320,6 +436,7 @@ function App() {
           )}
         </div>
       </main>
+      <ToastStack toasts={toasts} onDismiss={dismissToast} onOpen={openPipeline} />
     </div>
   );
 }

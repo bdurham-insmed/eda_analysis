@@ -25,3 +25,59 @@
   font-size: 0.85em;
   color: var(--text-tertiary);
 }
+
+/* Interactive table — left-edge accent on hover/keyboard cursor */
+.table--interactive tbody tr {
+  cursor: pointer;
+  position: relative;
+  /* keep keyboard-scrolled rows clear of the sticky topbar */
+  scroll-margin-top: calc(var(--topbar-height) + var(--space-3));
+  scroll-margin-bottom: var(--space-4);
+}
+
+.table--interactive tbody tr td:first-child {
+  position: relative;
+  box-shadow: inset 2px 0 0 transparent;
+  transition: box-shadow var(--transition);
+}
+
+.table--interactive tbody tr:hover td:first-child {
+  box-shadow: inset 2px 0 0 var(--accent-200);
+}
+
+.table--interactive tbody tr.row-active td:first-child {
+  box-shadow: inset 2px 0 0 var(--accent-500);
+}
+
+.table--interactive tbody tr.row-active {
+  background: var(--bg-hover);
+}
+
+/* Skeleton loading rows */
+.row-skeleton td {
+  padding-top: var(--space-3);
+  padding-bottom: var(--space-3);
+}
+
+.row-skeleton .skeleton {
+  height: 14px;
+}
+
+.skeleton--id {
+  width: 64px;
+  height: 12px;
+}
+.skeleton--text {
+  width: 70%;
+  min-width: 80px;
+  max-width: 220px;
+}
+.skeleton--mono {
+  width: 72px;
+  height: 12px;
+}
+.skeleton--pill {
+  width: 80px;
+  height: 18px;
+  border-radius: 999px;
+}

@@ -11,19 +11,29 @@
   border-radius: var(--radius-lg);
   padding: var(--space-4) var(--space-5);
   cursor: pointer;
-  transition: border-color var(--transition), box-shadow var(--transition);
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition),
+    background var(--transition);
   text-align: left;
   position: relative;
+  font-family: inherit;
 }
 
 .kpi:hover {
-  border-color: var(--slate-300);
+  border-color: var(--border-strong);
   box-shadow: var(--shadow-sm);
 }
 
 .kpi.active {
   border-color: var(--accent-500);
-  box-shadow: 0 0 0 3px var(--accent-100);
+  box-shadow:
+    0 0 0 1px var(--accent-500),
+    var(--shadow-sm);
+}
+
+.kpi.active .kpi-label {
+  color: var(--accent-700);
 }
 
 .kpi-label {
@@ -35,13 +45,14 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-tertiary);
+  transition: color var(--transition);
 }
 
 .kpi-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--slate-400);
+  background: var(--gray-400);
   display: inline-block;
 }
 
@@ -58,15 +69,16 @@
   background: var(--warning-500);
 }
 .kpi-dot--total {
-  background: var(--slate-700);
+  background: var(--gray-700);
 }
 
 .kpi-value {
   font-size: var(--fs-3xl);
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
   color: var(--text-primary);
   margin-top: var(--space-2);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   line-height: 1.1;
 }
 
@@ -74,6 +86,12 @@
   font-size: var(--fs-xs);
   color: var(--text-tertiary);
   margin-top: var(--space-1);
+}
+
+.kpi-value--skeleton {
+  height: 2rem;
+  width: 56%;
+  margin-top: var(--space-2);
 }
 
 .search-row {

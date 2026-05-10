@@ -1,4 +1,5 @@
 import type { Pipeline } from "../types.ts";
+import { isRecent } from "../utils/datetime.ts";
 import "./FilterPipelinesSection.css";
 
 type Props = {
@@ -7,6 +8,7 @@ type Props = {
   displayedStatus: string;
   handleParamChange: (name: string, value: unknown) => void;
   handleFilter: (status: string) => void;
+  initialLoad?: boolean;
 };
 
 type StatusKey = "TOTAL" | "RUNNING" | "COMPLETED" | "FAILED" | "RECENT";
@@ -33,17 +35,14 @@ export default function FilterPipelinesSection({
   displayedStatus,
   handleParamChange,
   handleFilter,
+  initialLoad = false,
 }: Props) {
   const counts: Record<StatusKey, number> = {
     TOTAL: pipelines.length,
     RUNNING: pipelines.filter((p) => p.status === "RUNNING").length,
     COMPLETED: pipelines.filter((p) => p.status === "COMPLETED").length,
     FAILED: pipelines.filter((p) => p.status === "FAILED").length,
-    RECENT: pipelines.filter((p) => {
-      const start = p.start_time ? new Date(p.start_time).getTime() : 0;
-      // eslint-disable-next-line react-hooks/purity
-      return Date.now() - start <= 10 * 60 * 1000;
-    }).length,
+    RECENT: pipelines.filter((p) => isRecent(p.start_time)).length,
   };
 
   return (
@@ -60,7 +59,11 @@ export default function FilterPipelinesSection({
               <span className={`kpi-dot ${dotClass}`} />
               {label}
             </span>
-            <div className="kpi-value">{counts[key].toLocaleString()}</div>
+            {initialLoad ? (
+              <div className="skeleton kpi-value--skeleton" aria-hidden="true" />
+            ) : (
+              <div className="kpi-value">{counts[key].toLocaleString()}</div>
+            )}
             <div className="kpi-sub">{sub}</div>
           </button>
         ))}

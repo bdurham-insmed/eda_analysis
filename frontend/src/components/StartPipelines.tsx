@@ -8,6 +8,7 @@ import type {
   WorkflowVersionSummary,
 } from "../types.ts";
 import { API_BASE, INITIATOR_BASE } from "../constants.ts";
+import { routes } from "../routes.ts";
 import "./StartPipelines.css";
 
 type Props = {
@@ -375,7 +376,13 @@ export default function StartPipelines({
             runnableWorkflows.length === 0 ? (
               <div className="empty-state">
                 <h3>No published workflow versions</h3>
-                <p>Create a workflow and publish a version in the Workflows tab.</p>
+                <p>
+                  Create a workflow and publish a version to start running
+                  pipelines.
+                </p>
+                <a href={routes.workflows()} className="btn btn-primary btn-sm">
+                  Go to Workflows
+                </a>
               </div>
             ) : (
               <div className="workflow-grid">
@@ -430,7 +437,13 @@ export default function StartPipelines({
 
               {selectableVersions.length === 0 ? (
                 <div className="banner banner-warning">
-                  No published versions available for this workflow.
+                  <span>No published versions available for this workflow.</span>
+                  <a
+                    href={routes.workflows()}
+                    className="banner-action"
+                  >
+                    Publish one →
+                  </a>
                 </div>
               ) : (
                 <div className="field">

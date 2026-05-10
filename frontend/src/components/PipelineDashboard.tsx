@@ -1,4 +1,7 @@
-import type { Pipeline } from "../types.ts";
+import { useEffect, useRef, useState } from "react";
+import type { Pipeline, PipelineStatus } from "../types.ts";
+import { useNowTicker } from "../hooks/useNowTicker.ts";
+import { formatDuration, formatDateTimeShort } from "../utils/datetime.ts";
 import "./PipelineDashboard.css";
 
 type Props = {
@@ -8,33 +11,20 @@ type Props = {
   pageSize: number;
   setCurrentPage: (n: number | ((p: number) => number)) => void;
   onSelectPipeline: (id: string) => void;
+  initialLoad?: boolean;
+  /** Disable keyboard nav while a modal/dialog owns focus. */
+  disableKeyboardNav?: boolean;
 };
 
-const getElapsedTime = (pipeline: Pipeline): string => {
-  if (!pipeline.start_time) return "—";
-  const start = new Date(pipeline.start_time).getTime();
-  const end = pipeline.end_time
-    ? new Date(pipeline.end_time).getTime()
-    : Date.now();
-  const seconds = Math.floor((end - start) / 1000);
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+const isTypingTarget = (el: EventTarget | null): boolean => {
+  if (!(el instanceof HTMLElement)) return false;
+  const tag = el.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+  if (el.isContentEditable) return true;
+  return false;
 };
 
-const formatTime = (iso: string | null): string => {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-};
-
-const statusClass = (status: string): string => {
+const statusClass = (status: PipelineStatus): string => {
   switch (status) {
     case "RUNNING":
       return "status status-running";
@@ -55,6 +45,18 @@ const IconInbox = () => (
   </svg>
 );
 
+const SkeletonRow = () => (
+  <tr className="row-skeleton" aria-hidden="true">
+    <td><span className="skeleton skeleton--id" /></td>
+    <td><span className="skeleton skeleton--text" /></td>
+    <td><span className="skeleton skeleton--pill" /></td>
+    <td><span className="skeleton skeleton--mono" /></td>
+    <td><span className="skeleton skeleton--text" /></td>
+    <td><span className="skeleton skeleton--text" /></td>
+    <td />
+  </tr>
+);
+
 export default function PipelineDashboard({
   pipelines,
   paginatedPipelines,
@@ -62,10 +64,113 @@ export default function PipelineDashboard({
   pageSize,
   setCurrentPage,
   onSelectPipeline,
+  initialLoad = false,
+  disableKeyboardNav = false,
 }: Props) {
   const lastPage = Math.max(1, Math.ceil(pipelines.length / pageSize));
   const rangeStart = pipelines.length === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const rangeEnd = Math.min(currentPage * pageSize, pipelines.length);
+
+  const hasRunning = paginatedPipelines.some((p) => p.status === "RUNNING");
+  useNowTicker(hasRunning);
+
+  // Cursor carries its page so a page change resets it during render (no setState-in-effect).
+  const [cursor, setCursor] = useState<{ page: number; index: number }>({
+    page: currentPage,
+    index: 0,
+  });
+  const tbodyRef = useRef<HTMLTableSectionElement>(null);
+  const didMountRef = useRef(false);
+
+  let activeIndex = cursor.index;
+  if (cursor.page !== currentPage) {
+    activeIndex = 0;
+    setCursor({ page: currentPage, index: 0 });
+  } else if (activeIndex > paginatedPipelines.length - 1) {
+    activeIndex = Math.max(0, paginatedPipelines.length - 1);
+  }
+  const setActiveIndex = (
+    next: number | ((prev: number) => number),
+  ) => {
+    setCursor((c) => ({
+      page: currentPage,
+      index: typeof next === "function" ? next(c.index) : next,
+    }));
+  };
+
+  // Ref mirror keeps the keydown listener stable across cursor/row updates.
+  const navRef = useRef({
+    rows: paginatedPipelines,
+    index: activeIndex,
+    lastPage,
+    currentPage,
+  });
+  useEffect(() => {
+    navRef.current = {
+      rows: paginatedPipelines,
+      index: activeIndex,
+      lastPage,
+      currentPage,
+    };
+  });
+
+  useEffect(() => {
+    if (disableKeyboardNav) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (isTypingTarget(e.target)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const { rows, index, lastPage: lp, currentPage: cp } = navRef.current;
+      if (rows.length === 0) return;
+      const moveTo = (next: number) =>
+        setCursor({ page: cp, index: Math.max(0, Math.min(rows.length - 1, next)) });
+      switch (e.key) {
+        case "ArrowDown":
+        case "j":
+          e.preventDefault();
+          moveTo(index + 1);
+          break;
+        case "ArrowUp":
+        case "k":
+          e.preventDefault();
+          moveTo(index - 1);
+          break;
+        case "Enter":
+          e.preventDefault();
+          if (rows[index]) onSelectPipeline(rows[index].id);
+          break;
+        case "PageDown":
+          e.preventDefault();
+          setCurrentPage((p) => Math.min(lp, p + 1));
+          break;
+        case "PageUp":
+          e.preventDefault();
+          setCurrentPage((p) => Math.max(1, p - 1));
+          break;
+        case "Home":
+          e.preventDefault();
+          moveTo(0);
+          break;
+        case "End":
+          e.preventDefault();
+          moveTo(rows.length - 1);
+          break;
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [disableKeyboardNav, onSelectPipeline, setCurrentPage]);
+
+  // Skip first mount; "auto" prevents smooth-scroll fighting held arrow keys.
+  useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
+    const row = tbodyRef.current?.children[activeIndex] as
+      | HTMLElement
+      | undefined;
+    row?.scrollIntoView({ block: "nearest", behavior: "auto" });
+  }, [activeIndex]);
 
   return (
     <section className="card">
@@ -74,11 +179,11 @@ export default function PipelineDashboard({
           <h2>Pipeline runs</h2>
         </div>
         <span className="muted" style={{ fontSize: "var(--fs-sm)" }}>
-          {pipelines.length.toLocaleString()} total
+          {initialLoad ? "Loading…" : `${pipelines.length.toLocaleString()} total`}
         </span>
       </div>
 
-      {pipelines.length === 0 ? (
+      {!initialLoad && pipelines.length === 0 ? (
         <div className="empty-state">
           <IconInbox />
           <h3>No pipelines yet</h3>
@@ -87,7 +192,7 @@ export default function PipelineDashboard({
       ) : (
         <>
           <div className="table-wrap">
-            <table className="table">
+            <table className="table table--interactive">
               <thead>
                 <tr>
                   <th>ID</th>
@@ -99,58 +204,82 @@ export default function PipelineDashboard({
                   <th aria-label="Actions" />
                 </tr>
               </thead>
-              <tbody>
-                {paginatedPipelines.map((p) => (
-                  <tr key={p.id}>
-                    <td className="id-cell" title={p.id}>
-                      {p.id.slice(0, 8)}
-                    </td>
-                    <td>
-                      {p.name}
-                      {p.version_number != null && (
-                        <span className="muted mono" style={{ marginLeft: 8, fontSize: "0.85em" }}>
-                          v{p.version_number}
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      <span className={statusClass(p.status)}>{p.status}</span>
-                    </td>
-                    <td className="duration-cell">{getElapsedTime(p)}</td>
-                    <td className="muted">{formatTime(p.start_time)}</td>
-                    <td className="muted">{formatTime(p.end_time)}</td>
-                    <td style={{ textAlign: "right" }}>
-                      <button
-                        type="button"
-                        onClick={() => onSelectPipeline(p.id)}
-                        className="btn btn-ghost btn-sm"
-                      >
-                        Details
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+              <tbody
+                ref={tbodyRef}
+                aria-label="Pipeline runs (use arrow keys to navigate, Enter to open)"
+              >
+                {initialLoad ? (
+                  <>
+                    <SkeletonRow />
+                    <SkeletonRow />
+                    <SkeletonRow />
+                    <SkeletonRow />
+                    <SkeletonRow />
+                  </>
+                ) : (
+                  paginatedPipelines.map((p, i) => (
+                    <tr
+                      key={p.id}
+                      className={i === activeIndex ? "row-active" : ""}
+                      onClick={() => {
+                        setActiveIndex(i);
+                        onSelectPipeline(p.id);
+                      }}
+                    >
+                      <td className="id-cell" title={p.id}>
+                        {p.id.slice(0, 8)}
+                      </td>
+                      <td>
+                        {p.name}
+                        {p.version_number != null && (
+                          <span className="muted mono" style={{ marginLeft: 8, fontSize: "0.85em" }}>
+                            v{p.version_number}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <span className={statusClass(p.status)}>{p.status}</span>
+                      </td>
+                      <td className="duration-cell">{formatDuration(p.start_time, p.end_time)}</td>
+                      <td className="muted">{formatDateTimeShort(p.start_time)}</td>
+                      <td className="muted">{formatDateTimeShort(p.end_time)}</td>
+                      <td style={{ textAlign: "right" }}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectPipeline(p.id);
+                          }}
+                          className="btn btn-ghost btn-sm"
+                        >
+                          Details
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
           <div className="pagination">
             <span>
-              {rangeStart.toLocaleString()}–{rangeEnd.toLocaleString()} of{" "}
-              {pipelines.length.toLocaleString()}
+              {initialLoad
+                ? "—"
+                : `${rangeStart.toLocaleString()}–${rangeEnd.toLocaleString()} of ${pipelines.length.toLocaleString()}`}
             </span>
             <div className="pagination-pages">
               <button
                 type="button"
                 onClick={() => setCurrentPage(1)}
                 className="btn btn-secondary btn-sm"
-                disabled={currentPage === 1}
+                disabled={initialLoad || currentPage === 1}
               >
                 First
               </button>
               <button
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
+                disabled={initialLoad || currentPage === 1}
                 className="btn btn-secondary btn-sm"
               >
                 Prev
@@ -161,7 +290,7 @@ export default function PipelineDashboard({
               <button
                 type="button"
                 onClick={() => setCurrentPage((p) => Math.min(lastPage, p + 1))}
-                disabled={currentPage === lastPage}
+                disabled={initialLoad || currentPage === lastPage}
                 className="btn btn-secondary btn-sm"
               >
                 Next
@@ -170,7 +299,7 @@ export default function PipelineDashboard({
                 type="button"
                 onClick={() => setCurrentPage(lastPage)}
                 className="btn btn-secondary btn-sm"
-                disabled={currentPage === lastPage}
+                disabled={initialLoad || currentPage === lastPage}
               >
                 Last
               </button>

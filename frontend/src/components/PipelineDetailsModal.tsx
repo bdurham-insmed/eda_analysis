@@ -1,28 +1,24 @@
-import type { Pipeline, Step } from "../types.ts";
+import { useEffect, useMemo } from "react";
+import type { Pipeline, PipelineStatus, Step } from "../types.ts";
+import { useNowTicker } from "../hooks/useNowTicker.ts";
+import {
+  formatDuration,
+  formatDateTime,
+  formatTimeOfDay,
+  parseIso,
+} from "../utils/datetime.ts";
 import "./PipelineDetailsModal.css";
+
+const getProgressLabel = (steps: Step[], completed: number): string => {
+  if (steps.some((s) => s.status === "FAILED")) return "Halted";
+  if (steps.some((s) => s.status === "RUNNING")) return "In progress";
+  if (completed === steps.length) return "Done";
+  return "Pending";
+};
 
 type Props = {
   pipeline: Pipeline;
   onClose: () => void;
-};
-
-const getElapsedTime = (pipeline: Pipeline): string => {
-  if (!pipeline.start_time) return "—";
-  const start = new Date(pipeline.start_time).getTime();
-  const end = pipeline.end_time
-    ? new Date(pipeline.end_time).getTime()
-    : Date.now();
-  const seconds = Math.floor((end - start) / 1000);
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = seconds % 60;
-  const pad = (n: number) => n.toString().padStart(2, "0");
-  return `${pad(h)}:${pad(m)}:${pad(s)}`;
-};
-
-const formatTime = (iso: string | null): string => {
-  if (!iso) return "—";
-  return new Date(iso).toLocaleString();
 };
 
 const renderParameterValue = (value: unknown) => {
@@ -36,7 +32,7 @@ const renderParameterValue = (value: unknown) => {
   return <code>{JSON.stringify(value)}</code>;
 };
 
-const statusClass = (status: string): string => {
+const statusClass = (status: PipelineStatus): string => {
   switch (status) {
     case "RUNNING":
       return "status status-running";
@@ -49,14 +45,14 @@ const statusClass = (status: string): string => {
   }
 };
 
-const stepMarkerClass = (status: string): string => {
+const stepMarkerClass = (status: PipelineStatus): string => {
   if (status === "RUNNING") return "step-marker step-marker--running";
   if (status === "COMPLETED") return "step-marker step-marker--completed";
   if (status === "FAILED") return "step-marker step-marker--failed";
   return "step-marker";
 };
 
-const StepIcon = ({ status }: { status: string }) => {
+const StepIcon = ({ status }: { status: PipelineStatus }) => {
   if (status === "COMPLETED") {
     return (
       <svg viewBox="0 0 16 16" fill="none" stroke="var(--success-700)" strokeWidth="2.5"
@@ -93,17 +89,32 @@ const IconClose = () => (
 );
 
 export default function PipelineDetailsModal({ pipeline, onClose }: Props) {
-  const sortedSteps: Step[] = [...(pipeline.steps ?? [])].sort((a, b) => {
-    const aOrder = a.step_order ?? Number.MAX_SAFE_INTEGER;
-    const bOrder = b.step_order ?? Number.MAX_SAFE_INTEGER;
-    if (aOrder !== bOrder) return aOrder - bOrder;
-    const getTime = (date: string | null) =>
-      date ? new Date(date).getTime() : 0;
-    const aStart = getTime(a.start_time);
-    const bStart = getTime(b.start_time);
-    if (aStart !== bStart) return aStart - bStart;
-    return getTime(a.end_time) - getTime(b.end_time);
-  });
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  useNowTicker(pipeline.status === "RUNNING");
+
+  const sortedSteps: Step[] = useMemo(() => {
+    return [...(pipeline.steps ?? [])].sort((a, b) => {
+      const aOrder = a.step_order ?? Number.MAX_SAFE_INTEGER;
+      const bOrder = b.step_order ?? Number.MAX_SAFE_INTEGER;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      const getTime = (date: string | null) =>
+        date ? parseIso(date).getTime() : 0;
+      const aStart = getTime(a.start_time);
+      const bStart = getTime(b.start_time);
+      if (aStart !== bStart) return aStart - bStart;
+      return getTime(a.end_time) - getTime(b.end_time);
+    });
+  }, [pipeline.steps]);
+
+  const completedCount = sortedSteps.filter((s) => s.status === "COMPLETED").length;
+  const progressLabel = getProgressLabel(sortedSteps, completedCount);
 
   const parameterEntries = pipeline.parameter_values
     ? Object.entries(pipeline.parameter_values)
@@ -148,11 +159,11 @@ export default function PipelineDetailsModal({ pipeline, onClose }: Props) {
                 )}
               </dd>
               <dt>Duration</dt>
-              <dd className="mono">{getElapsedTime(pipeline)}</dd>
+              <dd className="mono">{formatDuration(pipeline.start_time, pipeline.end_time)}</dd>
               <dt>Started</dt>
-              <dd>{formatTime(pipeline.start_time)}</dd>
+              <dd>{formatDateTime(pipeline.start_time)}</dd>
               <dt>Finished</dt>
-              <dd>{formatTime(pipeline.end_time)}</dd>
+              <dd>{formatDateTime(pipeline.end_time)}</dd>
             </dl>
           </section>
 
@@ -172,6 +183,32 @@ export default function PipelineDetailsModal({ pipeline, onClose }: Props) {
 
           <section className="detail-section">
             <h3>Steps</h3>
+            {sortedSteps.length > 0 && (
+              <div
+                className="step-progress"
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={sortedSteps.length}
+                aria-valuenow={completedCount}
+                aria-label={`${completedCount} of ${sortedSteps.length} steps complete`}
+              >
+                <div className="step-progress-meta">
+                  <span className="step-progress-count">
+                    {completedCount} of {sortedSteps.length} complete
+                  </span>
+                  <span className="step-progress-state">{progressLabel}</span>
+                </div>
+                <div className="step-progress-track">
+                  {sortedSteps.map((step, i) => (
+                    <span
+                      key={i}
+                      className={`step-progress-segment step-progress-segment--${step.status.toLowerCase()}`}
+                      title={`${step.name} · ${step.status}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
             {sortedSteps.length > 0 ? (
               <div className="step-timeline">
                 {sortedSteps.map((step, i) => (
@@ -186,13 +223,13 @@ export default function PipelineDetailsModal({ pipeline, onClose }: Props) {
                         {step.start_time && (
                           <>
                             {" · started "}
-                            {new Date(step.start_time).toLocaleTimeString()}
+                            {formatTimeOfDay(step.start_time)}
                           </>
                         )}
                         {step.end_time && (
                           <>
                             {" · finished "}
-                            {new Date(step.end_time).toLocaleTimeString()}
+                            {formatTimeOfDay(step.end_time)}
                           </>
                         )}
                       </div>
