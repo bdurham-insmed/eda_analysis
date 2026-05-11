@@ -78,6 +78,7 @@ def process_event(event: dict, *, engine, kafka_consumer, broadcast: bool = True
                 VALUES
                     (:pipeline_id, :name, 'RUNNING', NOW(),
                      :workflow_id, :workflow_version_id, CAST(:parameter_values AS JSONB))
+                ON CONFLICT (id) DO NOTHING
                 """),
                 {
                     "pipeline_id": pipeline_id,
@@ -92,6 +93,7 @@ def process_event(event: dict, *, engine, kafka_consumer, broadcast: bool = True
                     text("""
                     INSERT INTO pipeline_steps (pipeline_id, step_name, status, start_time, step_order, step_type)
                     VALUES (:pipeline_id, :step_name, 'PENDING', NULL, :step_order, :step_type)
+                    ON CONFLICT (pipeline_id, step_name) DO NOTHING
                     """),
                     {
                         "pipeline_id": pipeline_id,
