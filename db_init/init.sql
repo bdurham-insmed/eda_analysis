@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS pipeline_steps (
 CREATE INDEX IF NOT EXISTS idx_pipeline_steps_pipeline_id ON pipeline_steps(pipeline_id);
 CREATE INDEX IF NOT EXISTS idx_pipeline_steps_status ON pipeline_steps(status);
 CREATE INDEX IF NOT EXISTS idx_pipeline_steps_order ON pipeline_steps(pipeline_id, step_order);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_pipeline_steps_pipeline_step
+    ON pipeline_steps (pipeline_id, step_name);
 
 CREATE TABLE IF NOT EXISTS events (
     id SERIAL PRIMARY KEY,
