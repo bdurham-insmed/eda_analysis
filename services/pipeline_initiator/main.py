@@ -3,8 +3,6 @@ import logging
 import os
 import random
 import re
-import time
-from threading import Thread
 from uuid import uuid4
 
 from confluent_kafka import Producer
@@ -44,14 +42,6 @@ class PipelineRequest(BaseModel):
     count: int
 
 
-class Step(BaseModel):
-    """A single simulated step in a pipeline run."""
-
-    name: str
-    duration: int
-    failure_prob: float | None = None
-
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "*"],
@@ -59,113 +49,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-class PipelineSimulator:
-    """
-    Pipeline simulator that simulates a pipeline execution by publishing pipeline events to Kafka.
-    """
-
-    def __init__(
-        self,
-        pipeline_id: str,
-        workflow_id: int,
-        workflow_version_id: int,
-        version_number: int,
-        workflow_name: str,
-        parameter_values: dict,
-        db_steps: list[dict],
-        producer: Producer,
-    ):
-        self.pipeline_id = pipeline_id
-        self.workflow_id = workflow_id
-        self.workflow_version_id = workflow_version_id
-        self.version_number = version_number
-        self.workflow_name = workflow_name
-        self.parameter_values = parameter_values
-        self.steps = [
-            Step(
-                name=db_step["step_name"],
-                duration=random.randint(2, 7),
-                failure_prob=random.uniform(0.01, 0.05),
-            )
-            for db_step in db_steps
-        ]
-        self.steps_for_event = [
-            {
-                "name": s.name,
-                "duration": s.duration,
-                "failure_prob": s.failure_prob,
-                "step_order": db_steps[i]["step_order"],
-                "step_type": db_steps[i]["step_type"],
-            }
-            for i, s in enumerate(self.steps)
-        ]
-        self.kafka_producer = producer
-        self.status = "PENDING"
-
-    def produce_event(
-        self,
-        event_type: str,
-        step_name: str | None = None,
-        status: str | None = None,
-        error: str | None = None,
-        steps: list[dict] | None = None,
-    ) -> None:
-        """Emit a single pipeline event onto the Kafka topic."""
-        event = {
-            "pipeline_id": self.pipeline_id,
-            "name": self.workflow_name,
-            "event_type": event_type,
-            "timestamp": time.time(),
-        }
-        if event_type == "STARTED":
-            event["workflow_id"] = self.workflow_id
-            event["workflow_version_id"] = self.workflow_version_id
-            event["version_number"] = self.version_number
-            event["parameter_values"] = self.parameter_values
-            event["steps"] = steps if steps is not None else self.steps_for_event
-        if step_name:
-            event["step_name"] = step_name
-        if status:
-            event["status"] = status
-        if error:
-            event["error"] = error
-        try:
-            self.kafka_producer.produce("pipeline-events", key=self.pipeline_id, value=json.dumps(event))
-            self.kafka_producer.flush()
-        except Exception as e:
-            print(f"Failed to produce event: {e}")
-
-    def simulate(self) -> None:
-        """Run the pipeline simulation, emitting Kafka events as it progresses."""
-        self.status = "RUNNING"
-        self.produce_event(
-            event_type="STARTED",
-            status=self.status,
-            steps=self.steps_for_event,
-        )
-        for step in self.steps:
-            self.produce_event(event_type="STEP_STARTED", step_name=step.name, status=self.status)
-            time.sleep(step.duration)
-            if random.random() < step.failure_prob:
-                self.status = "FAILED"
-                self.produce_event(
-                    event_type="STEP_FAILED",
-                    step_name=step.name,
-                    status=self.status,
-                    error=f"Step {step.name} failed due to error.",
-                )
-                self.produce_event(
-                    event_type="FAILED",
-                    status=self.status,
-                    error=f"Pipeline {self.pipeline_id} failed at step {step.name}.",
-                )
-                return
-            self.produce_event(event_type="STEP_COMPLETED", step_name=step.name, status="COMPLETED")
-
-        self.status = "COMPLETED"
-        self.produce_event(event_type=self.status, status=self.status)
 
 
 def _validate_parameter_value(name: str, value: object, param: dict) -> None:
@@ -304,7 +187,7 @@ def start_jobs(request: PipelineRequest) -> dict:
 
     db_steps = [{"step_name": row[0], "step_order": row[1], "step_type": row[2]} for row in step_rows]
     for _ in range(request.count):
-        pipeline_start(
+        produce_command(
             workflow_id=workflow_id,
             workflow_version_id=version_id,
             version_number=version_number,
@@ -312,10 +195,11 @@ def start_jobs(request: PipelineRequest) -> dict:
             parameter_values=request.parameters,
             db_steps=db_steps,
         )
+    kafka_producer.flush()
     return {"message": "Pipeline job(s) have been received."}
 
 
-def pipeline_start(
+def produce_command(
     workflow_id: int,
     workflow_version_id: int,
     version_number: int,
@@ -324,21 +208,38 @@ def pipeline_start(
     db_steps: list[dict],
 ) -> None:
     """
-    Starts a pipeline job by creating a PipelineSimulator instance and running it in a separate thread.
+    Emit a single PIPELINE_REQUESTED command onto the `pipeline-commands` topic.
+
+    Step `duration` and `failure_prob` are rolled here once and embedded in the payload so
+    the worker does not re-roll on redelivery; timing of a run is therefore deterministic
+    across retries.
     """
     pipeline_id = str(uuid4())
-    simulator = PipelineSimulator(
-        pipeline_id=pipeline_id,
-        workflow_id=workflow_id,
-        workflow_version_id=workflow_version_id,
-        version_number=version_number,
-        workflow_name=workflow_name,
-        parameter_values=parameter_values,
-        db_steps=db_steps,
-        producer=kafka_producer,
-    )
-    thread = Thread(target=simulator.simulate)
-    thread.start()
+    steps = [
+        {
+            "name": db_step["step_name"],
+            "duration": random.randint(2, 7),
+            "failure_prob": random.uniform(0.01, 0.05),
+            "step_order": db_step["step_order"],
+            "step_type": db_step["step_type"],
+        }
+        for db_step in db_steps
+    ]
+    command = {
+        "event_type": "PIPELINE_REQUESTED",
+        "pipeline_id": pipeline_id,
+        "workflow_id": workflow_id,
+        "workflow_version_id": workflow_version_id,
+        "version_number": version_number,
+        "workflow_name": workflow_name,
+        "parameter_values": parameter_values,
+        "steps": steps,
+    }
+    try:
+        kafka_producer.produce("pipeline-commands", key=pipeline_id, value=json.dumps(command))
+    except Exception as e:
+        logger.exception("Failed to enqueue PIPELINE_REQUESTED command: %s", e)
+        raise
 
 
 @app.post("/uploads")

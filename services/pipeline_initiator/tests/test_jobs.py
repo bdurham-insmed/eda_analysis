@@ -126,9 +126,10 @@ def test_missing_gcs_object_returns_400(monkeypatch, client, initiator_module, s
     assert detail["parameter"] == "fastq_url"
 
 
-def test_happy_path_emits_started_event(client, initiator_module, seeded_workflow):
+def test_happy_path_emits_pipeline_requested_command(client, initiator_module, seeded_workflow):
     """
-    Successful POST /jobs produces a STARTED event with workflow + version metadata.
+    Successful POST /jobs produces exactly one PIPELINE_REQUESTED command on `pipeline-commands`
+    with the workflow/version metadata and pre-rolled step durations/failure probabilities.
     """
     res = client.post(
         "/jobs",
@@ -139,17 +140,46 @@ def test_happy_path_emits_started_event(client, initiator_module, seeded_workflo
         },
     )
     assert res.status_code == 202, res.text
-    initiator_module.kafka_producer.flush.assert_called()
-    started_calls = [
-        c
-        for c in initiator_module.kafka_producer.produce.call_args_list
-        if json.loads(c.kwargs["value"])["event_type"] == "STARTED"
-    ]
-    assert started_calls, "expected at least one STARTED event"
-    payload = json.loads(started_calls[0].kwargs["value"])
+    initiator_module.kafka_producer.flush.assert_called_once()
+
+    produce_calls = initiator_module.kafka_producer.produce.call_args_list
+    assert len(produce_calls) == 1, f"expected 1 produce call, got {len(produce_calls)}"
+    call = produce_calls[0]
+    assert call.args[0] == "pipeline-commands" or call.kwargs.get("topic") == "pipeline-commands"
+
+    payload = json.loads(call.kwargs["value"])
+    assert payload["event_type"] == "PIPELINE_REQUESTED"
     assert payload["workflow_id"] == seeded_workflow["workflow_id"]
     assert payload["workflow_version_id"] == seeded_workflow["version_id"]
     assert payload["version_number"] == 1
-    assert payload["name"] == "seed"
-    assert isinstance(payload["steps"], list)
-    assert payload["steps"][0]["step_order"] == 0
+    assert payload["workflow_name"] == "seed"
+    assert "pipeline_id" in payload and payload["pipeline_id"]
+    assert call.kwargs["key"] == payload["pipeline_id"]
+    assert isinstance(payload["steps"], list) and payload["steps"]
+    for step in payload["steps"]:
+        assert "name" in step
+        assert isinstance(step["duration"], int)
+        assert isinstance(step["failure_prob"], float)
+        assert "step_order" in step
+        assert "step_type" in step
+
+
+def test_multiple_count_emits_one_command_per_run(client, initiator_module, seeded_workflow):
+    """
+    POST /jobs with count=3 produces 3 distinct commands and exactly one final flush().
+    """
+    res = client.post(
+        "/jobs",
+        json={
+            "workflow_version_id": seeded_workflow["version_id"],
+            "parameters": {"reference_genome": "hg38"},
+            "count": 3,
+        },
+    )
+    assert res.status_code == 202, res.text
+    initiator_module.kafka_producer.flush.assert_called_once()
+
+    produce_calls = initiator_module.kafka_producer.produce.call_args_list
+    assert len(produce_calls) == 3
+    pipeline_ids = {json.loads(c.kwargs["value"])["pipeline_id"] for c in produce_calls}
+    assert len(pipeline_ids) == 3, "expected 3 distinct pipeline_ids"
