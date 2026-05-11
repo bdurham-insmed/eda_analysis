@@ -6,6 +6,7 @@ build-backend = "hatchling.build"
 members = [
     "services/api_server",
     "services/pipeline_initiator",
+    "services/simulator_worker",
     "services/state_tracker",
 ]
 

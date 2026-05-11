@@ -59,7 +59,12 @@ services:
           --bootstrap-server kafka:9092 \
           --partitions 20 \
           --replication-factor 1
-        
+        kafka-topics --create --if-not-exists \
+          --topic pipeline-commands \
+          --bootstrap-server kafka:9092 \
+          --partitions 20 \
+          --replication-factor 1
+
 
   kafbat-ui:
     image: ghcr.io/kafbat/kafka-ui:latest
@@ -123,6 +128,21 @@ services:
       - DATABASE_URL=postgresql://postgres:password@db/postgres
       - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
       - API_BROADCAST_URL=http://api:8000/internal/broadcast
+
+  simulator_worker:
+    build:
+      context: .
+      dockerfile: services/simulator_worker/Dockerfile
+    deploy:
+      replicas: 4
+    stop_grace_period: 15s
+    depends_on:
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
 
   metric_collector:
     build:
