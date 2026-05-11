@@ -218,7 +218,7 @@ def produce_command(
     steps = [
         {
             "name": db_step["step_name"],
-            "duration": random.randint(2, 7),
+            "duration": random.randint(0, 1),
             "failure_prob": random.uniform(0.01, 0.05),
             "step_order": db_step["step_order"],
             "step_type": db_step["step_type"],

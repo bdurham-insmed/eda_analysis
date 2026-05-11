@@ -62,7 +62,7 @@ services:
         kafka-topics --create --if-not-exists \
           --topic pipeline-commands \
           --bootstrap-server kafka:9092 \
-          --partitions 20 \
+          --partitions 100 \
           --replication-factor 1
 
 
@@ -134,7 +134,7 @@ services:
       context: .
       dockerfile: services/simulator_worker/Dockerfile
     deploy:
-      replicas: 4
+      replicas: 100
     stop_grace_period: 15s
     depends_on:
       kafka:
